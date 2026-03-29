@@ -1,105 +1,282 @@
 # search_plus
 
-Production-grade, highly customizable Flutter search with async API search, local/offline search, hybrid search, rich UI widgets, theming, animations, and localization.
+> 🚀 **Production-grade Flutter search for local, async, and hybrid data sources** — with polished UI widgets, theming, localization, and animation-first UX.
 
-## Features
-- 🔍 Core search engine with debouncing, cancellation, history, and suggestions
-- 🧩 Adapters for local, remote (async/API), and hybrid search; build custom adapters easily
-- 🎨 Ready-made UI (search bar, scaffold, results list) with theming and animation presets
-- 🌐 Localization-friendly strings and error states
-- ⚡ Ranking, fuzzy matching, and pagination support
+`search_plus` helps you ship fast, high-quality search experiences across mobile, web, and desktop using a clean adapter architecture and ready-to-use Material 3 components.
 
-## Install
-Add to `pubspec.yaml`:
+---
+
+## ✨ Features
+
+- ⚡ **Async API search** with debouncing, cancellation-safe state updates, and pagination parameters
+- 💾 **Local search** with ranked matching (exact, prefix, contains, fuzzy)
+- 🔀 **Hybrid search** that merges local + remote results with weighting and deduplication
+- 🧩 **Composable architecture** via `SearchAdapter<T>` for full extensibility
+- 🖼️ **Built-in UI system** (`SearchScaffold`, `SearchPlusBar`, `SearchResultsWidget`)
+- 🎞️ **Animation presets** (fade, slide, scale, staggered) + shimmer loading
+- 🎨 **Theme system** with Material 3-friendly defaults and deep customization
+- 🌍 **Localization-ready** text via `SearchLocalizations`
+- 🧠 **Suggestions + search history** support in controller and adapters
+- ♿ **Accessibility-friendly controls** with semantic labels and tooltips
+
+---
+
+## 🎥 Preview
+
+> Replace these placeholders with your own GIFs/screenshots before release.
+
+- Local search demo: `https://your-cdn.example/search-plus-local.gif`
+- Async API search demo: `https://your-cdn.example/search-plus-api.gif`
+- Hybrid search + theming demo: `https://your-cdn.example/search-plus-hybrid-theme.gif`
+
+---
+
+## 📦 Installation
+
+Add to your `pubspec.yaml`:
+
 ```yaml
 dependencies:
   search_plus: ^1.0.0
 ```
-Then run `flutter pub get`.
 
-## Quickstart
+Then run:
+
+```bash
+flutter pub get
+```
+
+---
+
+## ⚡ Quick Start
+
 ```dart
+import 'package:flutter/material.dart';
 import 'package:search_plus/search_plus.dart';
 
-final controller = SearchPlusController<Product>(
-  adapter: LocalSearchAdapter<Product>(
-    items: products,
-    searchableFields: (p) => [p.name, p.description],
-    toResult: (p) => SearchResult(id: p.id, title: p.name, data: p),
-    enableFuzzySearch: true,
-  ),
-);
+final products = ['iPhone', 'Pixel', 'Galaxy', 'Xperia'];
 
-class ProductSearchPage extends StatelessWidget {
-  const ProductSearchPage({super.key});
+class QuickStartPage extends StatefulWidget {
+  const QuickStartPage({super.key});
+
+  @override
+  State<QuickStartPage> createState() => _QuickStartPageState();
+}
+
+class _QuickStartPageState extends State<QuickStartPage> {
+  late final SearchPlusController<String> controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = SearchPlusController<String>(
+      adapter: LocalSearchAdapter<String>(
+        items: products,
+        searchableFields: (item) => [item],
+        toResult: (item) => SearchResult(id: item, title: item, data: item),
+        enableFuzzySearch: true,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SearchScaffold<Product>(
+    return SearchScaffold<String>(
       controller: controller,
-      searchBar: const SearchBarWidget(),
-      resultsBuilder: (context, state) => SearchResultsWidget<Product>(
-        state: state,
-        itemBuilder: (context, result) => ListTile(
-          title: Text(result.title),
-          subtitle: Text(result.subtitle ?? ''),
-        ),
-      ),
+      hintText: 'Search products...',
     );
   }
 }
 ```
 
-## Adapters
-- **LocalSearchAdapter**: In-memory list search with ranking, fuzzy matching, and suggestions.
-- **RemoteSearchAdapter**: Wrap an async/API call; returns `List<SearchResult<T>>`.
-- **HybridSearchAdapter**: Combine local and remote sources (e.g., local cache + API).
-- **Custom adapters**: Implement `SearchAdapter<T>` and its `search` (and optional `suggest`) methods.
+---
 
-### Remote example
+## 🧠 Advanced Usage
+
+### 1) Async API search
+
 ```dart
-final adapter = RemoteSearchAdapter<Product>(
-  fetch: (query, {limit, offset}) async {
-    final response = await api.searchProducts(query, limit: limit, offset: offset);
+final remoteAdapter = RemoteSearchAdapter<Product>(
+  searchFunction: (query, limit, offset) async {
+    final response = await api.searchProducts(
+      query,
+      limit: limit,
+      offset: offset,
+    );
+
     return response.items
-        .map((p) => SearchResult(id: p.id, title: p.name, subtitle: p.description, data: p))
+        .map(
+          (item) => SearchResult<Product>(
+            id: item.id,
+            title: item.name,
+            subtitle: item.description,
+            data: item,
+          ),
+        )
         .toList();
   },
+  suggestFunction: (query) => api.suggestProducts(query),
+);
+
+final controller = SearchPlusController<Product>(
+  adapter: remoteAdapter,
+  debounceDuration: const Duration(milliseconds: 450),
 );
 ```
 
-## UI building blocks
-- `SearchScaffold`: High-level layout wiring search bar + results to a controller.
-- `SearchBarWidget`: Debounced search input with clear and suggest hooks.
-- `SearchResultsWidget`: Renders loading, empty, error, and success states.
-- `SearchStates` helpers: Convenient widgets for different states.
+### 2) Local search
 
-## Theming & animations
-- `SearchTheme`: Colors, typography, paddings, borders, and spacing overrides.
-- `AnimationPresets`: Fade/slide/scale presets to quickly animate transitions.
-- Apply via `SearchScaffold(theme: SearchTheme(...), animations: AnimationPresets.fadeIn)`.
+```dart
+final localAdapter = LocalSearchAdapter<Article>(
+  items: articles,
+  searchableFields: (a) => [a.title, a.body, a.tags.join(' ')],
+  toResult: (a) => SearchResult(
+    id: a.id,
+    title: a.title,
+    subtitle: a.excerpt,
+    data: a,
+  ),
+  enableFuzzySearch: true,
+  rankingConfig: const SearchRankingConfig(
+    boostExactMatch: 1.2,
+    boostPrefixMatch: 1.1,
+    fuzzyThreshold: 0.35,
+  ),
+);
+```
 
-## Localization
-- Strings live in `search_localizations.dart`. Provide your own `SearchLocalizations` or use Flutter localization delegates to override labels, empty/error messages, and button text.
+### 3) Hybrid search
 
-## State & history
-- `SearchPlusController` exposes `state`, `results`, `status`, `isLoading`, `hasError`, `hasResults`.
-- Built-in history: `addToHistory`, `clearHistory`, and `state.history`.
-- Suggestions: `controller.suggest(query)` delegates to the adapter.
+```dart
+final hybridAdapter = HybridSearchAdapter<Item>(
+  localAdapter: localAdapter,
+  remoteAdapter: remoteAdapter,
+  localWeight: 1.2,
+  remoteWeight: 1.0,
+  deduplicateById: true,
+);
 
-## Testing tips
-- Use `SearchEngine` directly in unit tests with a fake adapter.
-- For widgets, provide a mock adapter and pump `SearchScaffold` with `WidgetTester`.
+final controller = SearchPlusController<Item>(adapter: hybridAdapter);
+```
 
-## Publishing to pub.dev (Dart Pub) guide
-1. **Prepare metadata**: Update `pubspec.yaml` with correct `version`, `description`, `homepage`, `repository`, `issue_tracker`, and `license` file.
-2. **Docs**: Ensure `README.md` (this file) and `CHANGELOG.md` exist and are up to date; include usage examples.
-3. **Format & analyze**: Run `dart format .` and `dart analyze` (or `flutter analyze`); run `flutter test` if tests exist.
-4. **Verify assets**: Remove large/unneeded files; ensure screenshots are in `assets/` and referenced if required.
-5. **Dry run**: `dart pub publish --dry-run` (or `flutter pub publish --dry-run`) and fix any reported issues.
-6. **Authenticate once**: Run `dart pub login` (opens a browser) if not already authenticated.
-7. **Publish**: `dart pub publish` (or `flutter pub publish`), confirm the prompt. Tag the release in git for traceability.
-8. **Post-publish**: Verify the package page, add a release note, and announce if desired.
+---
+
+## 🎨 Theming Guide
+
+Use `SearchTheme` with `SearchThemeData` to customize search visuals globally in a subtree:
+
+```dart
+SearchTheme(
+  data: SearchThemeData(
+    searchBarTheme: SearchBarThemeData(
+      borderRadius: BorderRadius.circular(18),
+      focusedBorderColor: Colors.deepPurple,
+    ),
+    resultTheme: SearchResultThemeData(
+      highlightColor: Colors.deepPurple.shade100,
+    ),
+  ),
+  child: SearchScaffold<String>(controller: controller),
+)
+```
+
+You can customize:
+
+- Search bar shape, elevation, border, icon/text styles
+- Result typography, spacing, highlight style/color, and section headers
+- Animation duration/curve defaults at the theme level
+
+---
+
+## 🌍 Localization Guide
+
+Override package strings with `SearchLocalizationsProvider`:
+
+```dart
+SearchLocalizationsProvider(
+  localizations: const SearchLocalizations(
+    hintText: 'Buscar...',
+    emptyResultsText: 'Sin resultados',
+    retryText: 'Reintentar',
+  ),
+  child: SearchScaffold<String>(controller: controller),
+)
+```
+
+You can localize search hints, empty/error labels, retry/clear actions, and results count text.
+
+---
+
+## 🎞 Animation Customization
+
+Use built-in presets with `SearchAnimationConfig`:
+
+```dart
+SearchScaffold<String>(
+  controller: controller,
+  animationConfig: const SearchAnimationConfig(
+    preset: SearchAnimationPreset.staggered,
+    duration: Duration(milliseconds: 280),
+    staggerDelay: Duration(milliseconds: 40),
+  ),
+)
+```
+
+Available presets:
+
+- `none`
+- `fade`
+- `slideUp`
+- `slideRight`
+- `scale`
+- `fadeSlideUp`
+- `staggered`
+
+---
+
+## 🧩 Extensibility
+
+Implement `SearchAdapter<T>` to integrate any data source or ranking strategy:
+
+- SQL / Isar / Hive local stores
+- REST / GraphQL / gRPC APIs
+- Enterprise search backends (Elastic/OpenSearch/Algolia-like wrappers)
+- Domain-specific relevance or permission-aware filtering
+
+This keeps UI and search logic decoupled and reusable.
+
+---
+
+## 📊 Performance Notes
+
+- Prefer local adapter for low-latency offline search paths.
+- Use debouncing for remote APIs to reduce unnecessary network calls.
+- Keep `maxResults` realistic for your UI layout and device class.
+- Consider caching remote results for hybrid experiences.
+- Use sectioned or paged strategies for very large datasets.
+
+---
+
+## Example App
+
+See `/example` for a full showcase including:
+
+- local search
+- async remote search
+- hybrid search
+- theme switching
+- localization overrides
+- animation presets
+- search history and suggestions
+
+---
 
 ## License
-This project is available under the terms of the license in the `LICENSE` file.
+
+MIT — see [`LICENSE`](LICENSE).

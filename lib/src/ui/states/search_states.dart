@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:search_plus/search_plus.dart';
 
-import '../l10n/search_localizations.dart';
-import '../theme/search_theme.dart';
 
 /// A beautiful empty state widget shown when search returns no results.
 class SearchEmptyState extends StatelessWidget {
