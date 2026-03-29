@@ -1,8 +1,8 @@
 name: search_plus
 description: >
-  A production-grade, highly customizable Flutter search package supporting
-  async API search, local/offline search, hybrid search, rich UI, theming,
-  animations, and localization.
+  A production-grade Flutter search package with async API, local, and hybrid
+  search adapters, plus polished UI widgets, theming, animations, and
+  localization support.
 version: 1.0.0
 homepage: https://github.com/yasersabri580-oss/search_plus
 repository: https://github.com/yasersabri580-oss/search_plus
@@ -10,7 +10,7 @@ issue_tracker: https://github.com/yasersabri580-oss/search_plus/issues
 
 environment:
   sdk: ^3.10.0
-  flutter: ">=3.22.0"
+  flutter: '>=3.22.0'
 
 dependencies:
   flutter:
