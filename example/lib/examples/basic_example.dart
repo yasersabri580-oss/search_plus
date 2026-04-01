@@ -41,6 +41,7 @@ class _BasicExampleState extends State<BasicExample> {
     _controller = SearchPlusController<String>(
       adapter: LocalSearchAdapter<String>(
         items: _fruits,
+        
         searchableFields: (item) => [item],
         toResult: (item) => SearchResult<String>(
           id: item,
@@ -63,6 +64,7 @@ class _BasicExampleState extends State<BasicExample> {
       appBar: AppBar(title: const Text('Basic Example')),
       body: SearchScaffold<String>(
         controller: _controller,
+
         hintText: 'Search fruits…',
         onItemTap: (result) {
           ScaffoldMessenger.of(context)
