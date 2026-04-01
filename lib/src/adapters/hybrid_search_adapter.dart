@@ -44,25 +44,30 @@ class HybridSearchAdapter<T> extends SearchAdapter<T> {
     int limit = 50,
     int offset = 0,
   }) async {
-    final results = await Future.wait([
-      localAdapter.search(query, limit: limit, offset: offset),
-      remoteAdapter.search(query, limit: limit, offset: offset),
+    final futures = await Future.wait([
+      _trySearch(localAdapter, query, limit, offset),
+      _trySearch(remoteAdapter, query, limit, offset),
     ]);
 
-    final localResults = results[0];
-    final remoteResults = results[1];
+    final localResults = futures[0];
+    final remoteResults = futures[1];
+
+    // If both adapters failed, rethrow so the engine can surface the error.
+    if (localResults == null && remoteResults == null) {
+      throw Exception('Both local and remote search failed');
+    }
 
     // Apply weights
     final weighted = <SearchResult<T>>[];
 
-    for (final r in localResults) {
+    for (final r in localResults ?? const []) {
       weighted.add(r.copyWith(
         score: r.score * localWeight,
         source: SearchResultSource.local,
       ));
     }
 
-    for (final r in remoteResults) {
+    for (final r in remoteResults ?? const []) {
       weighted.add(r.copyWith(
         score: r.score * remoteWeight,
         source: SearchResultSource.remote,
@@ -86,14 +91,43 @@ class HybridSearchAdapter<T> extends SearchAdapter<T> {
     return weighted;
   }
 
+  /// Attempts a search, returning null on failure instead of throwing.
+  Future<List<SearchResult<T>>?> _trySearch(
+    SearchAdapter<T> adapter,
+    String query,
+    int limit,
+    int offset,
+  ) async {
+    try {
+      return await adapter.search(query, limit: limit, offset: offset);
+    } catch (_) {
+      return null;
+    }
+  }
+
   @override
   Future<List<String>> suggest(String query) async {
     final results = await Future.wait([
-      localAdapter.suggest(query),
-      remoteAdapter.suggest(query),
+      _trySuggest(localAdapter, query),
+      _trySuggest(remoteAdapter, query),
     ]);
-    final combined = <String>{...results[0], ...results[1]};
+    final combined = <String>{
+      ...results[0] ?? const <String>[],
+      ...results[1] ?? const <String>[],
+    };
     return combined.toList();
+  }
+
+  /// Attempts to get suggestions, returning null on failure instead of throwing.
+  Future<List<String>?> _trySuggest(
+    SearchAdapter<T> adapter,
+    String query,
+  ) async {
+    try {
+      return await adapter.suggest(query);
+    } catch (_) {
+      return null;
+    }
   }
 
   @override

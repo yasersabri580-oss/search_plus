@@ -182,7 +182,7 @@ class SearchPlusController<T> extends ChangeNotifier {
           maxResults: maxResults,
         ) {
     _subscription = _engine.stateStream.listen((state) {
-      _state = state.copyWith(history: _history);
+      _state = state.copyWith(history: _history, error: state.error);
       notifyListeners();
     });
   }

@@ -246,6 +246,110 @@ void main() {
           results.firstWhere((r) => r.source == SearchResultSource.remote);
       expect(localResult.score, greaterThan(remoteResult.score));
     });
+
+    test('returns local results when remote adapter fails', () async {
+      final local = LocalSearchAdapter<String>(
+        items: ['Local Apple'],
+        searchableFields: (item) => [item],
+        toResult: (item) =>
+            SearchResult(id: item, title: item, data: item),
+      );
+
+      final remote = RemoteSearchAdapter<String>(
+        searchFunction: (query, limit, offset) async {
+          throw Exception('Network error');
+        },
+      );
+
+      final hybrid = HybridSearchAdapter<String>(
+        localAdapter: local,
+        remoteAdapter: remote,
+        deduplicateById: false,
+      );
+
+      final results = await hybrid.search('apple');
+      expect(results, isNotEmpty);
+      expect(results.first.source, SearchResultSource.local);
+    });
+
+    test('returns remote results when local adapter fails', () async {
+      final failingLocal = RemoteSearchAdapter<String>(
+        searchFunction: (query, limit, offset) async {
+          throw Exception('Local error');
+        },
+      );
+
+      final remote = RemoteSearchAdapter<String>(
+        searchFunction: (query, limit, offset) async {
+          return [
+            SearchResult(
+              id: 'remote-1',
+              title: 'Remote Apple',
+              data: 'remote',
+              score: 0.5,
+            ),
+          ];
+        },
+      );
+
+      final hybrid = HybridSearchAdapter<String>(
+        localAdapter: failingLocal,
+        remoteAdapter: remote,
+        deduplicateById: false,
+      );
+
+      final results = await hybrid.search('apple');
+      expect(results, isNotEmpty);
+      expect(results.first.source, SearchResultSource.remote);
+    });
+
+    test('throws when both adapters fail', () async {
+      final failingLocal = RemoteSearchAdapter<String>(
+        searchFunction: (query, limit, offset) async {
+          throw Exception('Local error');
+        },
+      );
+
+      final failingRemote = RemoteSearchAdapter<String>(
+        searchFunction: (query, limit, offset) async {
+          throw Exception('Remote error');
+        },
+      );
+
+      final hybrid = HybridSearchAdapter<String>(
+        localAdapter: failingLocal,
+        remoteAdapter: failingRemote,
+      );
+
+      expect(
+        () => hybrid.search('apple'),
+        throwsException,
+      );
+    });
+
+    test('suggest gracefully handles one adapter failing', () async {
+      final local = LocalSearchAdapter<String>(
+        items: ['Flutter', 'Dart'],
+        searchableFields: (item) => [item],
+        toResult: (item) =>
+            SearchResult(id: item, title: item, data: item),
+      );
+
+      final remote = RemoteSearchAdapter<String>(
+        searchFunction: (query, limit, offset) async => [],
+        suggestFunction: (query) async {
+          throw Exception('Suggest error');
+        },
+      );
+
+      final hybrid = HybridSearchAdapter<String>(
+        localAdapter: local,
+        remoteAdapter: remote,
+      );
+
+      final suggestions = await hybrid.suggest('Flu');
+      expect(suggestions, contains('Flutter'));
+    });
   });
 
   group('SearchResult', () {
