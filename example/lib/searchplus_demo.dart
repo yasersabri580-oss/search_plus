@@ -87,6 +87,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
         _controller = SearchPlusController<Article>(
           adapter: RemoteSearchAdapter<Article>(
             searchFunction: (q, limit, offset) => _api.searchArticles(q, limit: limit, offset: offset),
+            suggestFunction: _api.suggestArticles,
           ),
           debounceDuration: const Duration(milliseconds: 300),
           maxHistoryItems: 8,

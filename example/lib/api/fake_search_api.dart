@@ -491,6 +491,16 @@ class FakeSearchApi {
         .toList();
   }
 
+  Future<List<String>> suggestArticles(String query) async {
+    await Future<void>.delayed(const Duration(milliseconds: 150));
+    final q = query.toLowerCase();
+    return sampleArticles
+        .where((a) => a.title.toLowerCase().contains(q))
+        .take(5)
+        .map((a) => a.title)
+        .toList();
+  }
+
   static String _formatFollowers(int count) {
     if (count >= 1000) {
       return '${(count / 1000).toStringAsFixed(1)}K';

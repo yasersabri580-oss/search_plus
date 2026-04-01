@@ -7,7 +7,7 @@
   <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web%20%7C%20Desktop-blue" alt="Platform" />
 </p>
 
-**Production-grade Flutter search — local, remote, and hybrid — with polished UI, theming, animations, and a developer experience you'll love.**
+**Production-grade Flutter search — local, remote, and hybrid — with polished UI, overlay mode, theming, animations, persistent history, and a developer experience you'll love.**
 
 Ship fast, beautiful search experiences across mobile, web, and desktop using a clean adapter architecture and ready-to-use Material 3 components.
 
@@ -22,8 +22,11 @@ Ship fast, beautiful search experiences across mobile, web, and desktop using a 
 | 🔀 **Hybrid Search** | Merge local + remote results with weighting and deduplication |
 | 🧩 **Adapter Architecture** | Plug in any data source via `SearchAdapter<T>` |
 | 🖼️ **Built-in UI System** | `SearchScaffold`, `SearchPlusBar`, `SearchResultsWidget` |
+| 🪟 **Overlay / Dropdown Mode** | `SearchOverlay` — floating results panel with auto-dismiss |
 | 🎞️ **7 Animation Presets** | Fade, slide, scale, staggered — plus shimmer loading |
 | 🎨 **Deep Theming** | 30+ customizable properties with Material 3 defaults |
+| ⚙️ **SearchConfig** | Advanced behavior: debounce, trim, case, capitalization, limits |
+| 💽 **Persistent History** | Pluggable storage (in-memory, secure, or custom) |
 | 🌍 **Localization Ready** | 13 customizable strings via `SearchLocalizations` |
 | 🧠 **Suggestions + History** | Built-in support in controller and adapters |
 | ♿ **Accessible** | Semantic labels, tooltips, keyboard-friendly |
@@ -35,13 +38,13 @@ Ship fast, beautiful search experiences across mobile, web, and desktop using a 
 
 > Replace the placeholders below with your own GIFs/screenshots.
 
-| Local Search | Remote API Search | Hybrid + Theme |
+| Local Search | Remote API Search | Overlay Mode |
 |:---:|:---:|:---:|
-| ![Local](https://via.placeholder.com/280x500/6A4CFF/fff?text=Local+Search) | ![Remote](https://via.placeholder.com/280x500/6A4CFF/fff?text=Remote+Search) | ![Hybrid](https://via.placeholder.com/280x500/6A4CFF/fff?text=Hybrid+Theme) |
+| ![Local](https://via.placeholder.com/280x500/6A4CFF/fff?text=Local+Search) | ![Remote](https://via.placeholder.com/280x500/6A4CFF/fff?text=Remote+Search) | ![Overlay](https://via.placeholder.com/280x500/6A4CFF/fff?text=Overlay+Mode) |
 
-| Interactive Demo | Full Showcase | Dark Mode |
+| Interactive Demo | 6 Style Presets | Dark Premium |
 |:---:|:---:|:---:|
-| ![Demo](https://via.placeholder.com/280x500/6A4CFF/fff?text=Demo+Screen) | ![Showcase](https://via.placeholder.com/280x500/6A4CFF/fff?text=Showcase) | ![Dark](https://via.placeholder.com/280x500/6A4CFF/fff?text=Dark+Mode) |
+| ![Demo](https://via.placeholder.com/280x500/6A4CFF/fff?text=Demo+Screen) | ![Styles](https://via.placeholder.com/280x500/6A4CFF/fff?text=6+Styles) | ![Premium](https://via.placeholder.com/280x500/6A4CFF/fff?text=Dark+Premium) |
 
 ---
 
@@ -116,7 +119,7 @@ That's it — debouncing, state management, empty/loading/error states, and anim
 
 ## 🧩 Examples
 
-The `/example` app ships with **six runnable examples**, from minimal to full showcase. Run them with:
+The `/example` app ships with **seven runnable examples**, from minimal to full showcase. Run them with:
 
 ```bash
 cd example
@@ -184,21 +187,229 @@ A complete screen with **tabs** (Results / Suggestions / Trending), **category f
 
 ### 5. Original Example
 
-The comprehensive demo: local + remote + hybrid modes, theme switching, localization overrides, animation presets, and density settings.
+The comprehensive demo: local + remote + hybrid modes, theme switching, localization overrides, animation presets, keyboard navigation, and density settings.
 
-### 6. 🧪 Interactive Demo (`searchplus_demo.dart`)
+### 6. Overlay Example
+
+Floating dropdown results that appear above page content. Demonstrates the `SearchOverlay` widget with auto-dismiss on outside tap and smooth animations.
+
+```dart
+SearchOverlay<Product>(
+  controller: controller,
+  hintText: 'Search products…',
+  maxOverlayHeight: 350,
+  animationConfig: const SearchAnimationConfig(
+    preset: SearchAnimationPreset.fadeSlideUp,
+  ),
+  onItemTap: (result) => print('Selected: ${result.title}'),
+)
+```
+
+### 7. 🧪 Interactive Demo (`searchplus_demo.dart`)
 
 A dedicated test/demo screen with a **control panel drawer** for:
 
 - **Dataset**: Products / Users / Articles
-- **Style**: Minimal / Modern SaaS / Dark / Social / Glassmorphism
+- **Style**: Minimal / Modern SaaS / Dark / Social / Glass / Dark Premium (6 styles)
 - **Animation**: All 7 presets
 - **Layout**: List / Grid
 - **Density**: Compact / Comfortable / Rich
 - **Forced State**: Auto / Loading / Empty / Error
+- **Result Mode**: Inline / Overlay dropdown toggle
 - **API Delay**: 100 ms → 3000 ms slider
 
 Perfect for recording demo videos.
+
+---
+
+## ⚙️ Configuration Options
+
+Use `SearchConfig` for advanced control over search behavior:
+
+```dart
+const config = SearchConfig(
+  debounceDuration: Duration(milliseconds: 400),
+  minQueryLength: 2,
+  maxResultCount: 30,
+  trimInput: true,
+  caseSensitive: false,
+  inputTransformation: InputTransformation.lowercase,
+  autoCorrect: true,
+  textCapitalization: TextCapitalization.none,
+  searchInTitle: true,
+  searchInSubtitle: true,
+  searchInTags: true,
+  recentHistoryEnabled: true,
+  maxHistoryItems: 10,
+  overlayEnabled: false,
+  overlayMaxHeight: 400,
+  animationEnabled: true,
+);
+```
+
+### Config Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `debounceDuration` | `Duration` | 300ms | Debounce delay before search triggers |
+| `minQueryLength` | `int` | 1 | Min characters before search starts |
+| `maxResultCount` | `int` | 50 | Maximum results returned |
+| `trimInput` | `bool` | `true` | Trim whitespace from input |
+| `caseSensitive` | `bool` | `false` | Case-sensitive matching |
+| `inputTransformation` | `InputTransformation` | `none` | Transform query: none, lowercase, uppercase |
+| `autoCorrect` | `bool` | `true` | Enable autocorrect on text field |
+| `textCapitalization` | `TextCapitalization` | `none` | Input capitalization mode |
+| `searchInTitle` | `bool` | `true` | Search in result titles |
+| `searchInSubtitle` | `bool` | `true` | Search in subtitles |
+| `searchInTags` | `bool` | `true` | Search in tags/metadata |
+| `recentHistoryEnabled` | `bool` | `true` | Enable search history |
+| `maxHistoryItems` | `int` | 10 | Max history items to keep |
+| `overlayEnabled` | `bool` | `false` | Use overlay dropdown mode |
+| `overlayMaxHeight` | `double` | 400 | Max height of overlay panel |
+| `animationEnabled` | `bool` | `true` | Enable animations |
+
+---
+
+## 🪟 Overlay Mode
+
+Search Plus offers two result presentation modes:
+
+### Inline Mode (Default)
+
+Results appear below the search bar in the page flow:
+
+```dart
+SearchScaffold<Product>(
+  controller: controller,
+  hintText: 'Search...',
+)
+```
+
+### Overlay / Dropdown Mode
+
+Results float above page content in a dismissible panel:
+
+```dart
+SearchOverlay<Product>(
+  controller: controller,
+  hintText: 'Search products…',
+  maxOverlayHeight: 400,
+  overlayElevation: 8,
+  closeOnSelect: true,
+  animationConfig: const SearchAnimationConfig(
+    preset: SearchAnimationPreset.fadeSlideUp,
+  ),
+  onItemTap: (result) => handleSelection(result),
+  itemBuilder: (context, result, index) => ListTile(
+    title: Text(result.title),
+    subtitle: Text(result.subtitle ?? ''),
+  ),
+)
+```
+
+**Overlay behavior:**
+- Opens when results become available
+- Closes on outside tap, Escape, or focus loss
+- Smooth fade-in/out animation
+- Respects all theming and animation configs
+- Works on mobile, tablet, and desktop
+
+---
+
+## 💽 Search History Storage
+
+Search Plus provides a pluggable history storage system:
+
+### In-Memory (Default)
+
+History lives only in memory — lost on app restart:
+
+```dart
+final manager = SearchHistoryManager(maxItems: 10);
+await manager.add('flutter widgets');
+print(manager.items); // ['flutter widgets']
+```
+
+### Custom Persistent Storage
+
+Implement `SearchHistoryStorage` for any backend:
+
+```dart
+class SharedPrefsHistoryStorage extends SearchHistoryStorage {
+  final SharedPreferences prefs;
+  SharedPrefsHistoryStorage(this.prefs);
+
+  @override
+  Future<List<String>> load() async {
+    return prefs.getStringList('search_history') ?? [];
+  }
+
+  @override
+  Future<void> save(List<String> history) async {
+    await prefs.setStringList('search_history', history);
+  }
+
+  @override
+  Future<void> clear() async {
+    await prefs.remove('search_history');
+  }
+}
+```
+
+### Secure Fallback Storage
+
+For secure storage backends:
+
+```dart
+final storage = SecureFallbackHistoryStorage(
+  readFn: () => secureStorage.read(key: 'history') ?? '',
+  writeFn: (data) => secureStorage.write(key: 'history', value: data),
+  deleteFn: () => secureStorage.delete(key: 'history'),
+);
+
+final manager = SearchHistoryManager(
+  maxItems: 10,
+  storage: storage,
+);
+await manager.load(); // Load from storage on startup
+```
+
+### History Features
+
+- **Deduplication**: Same query won't appear twice
+- **Max count**: Oldest entries are dropped automatically
+- **Remove individual**: `manager.remove('old query')`
+- **Clear all**: `manager.clearAll()`
+- **Persistent**: Survives app restarts with custom storage
+
+---
+
+## 🧩 Fake API / Demo Mode
+
+The example app includes a `FakeSearchApi` for realistic demos:
+
+```dart
+final api = FakeSearchApi(
+  minDelay: Duration(milliseconds: 200),
+  maxDelay: Duration(milliseconds: 800),
+  errorRate: 0.0, // Set > 0 to simulate errors
+);
+
+// Search users, products, or articles
+final results = await api.searchUsers('sarah');
+final products = await api.searchProducts('keyboard');
+final articles = await api.searchArticles('flutter');
+
+// Suggestions
+final suggestions = await api.suggestProducts('wire');
+```
+
+**Features:**
+- Configurable simulated delay
+- Configurable error rate for error state testing
+- Three datasets: users (10 items), products (12 items), articles (8 items)
+- Trending searches and recent search samples included
+- Deterministic results for reproducible demos
 
 ---
 
@@ -278,6 +489,17 @@ SearchTheme(
 **Results** (`SearchResultThemeData`):
 `backgroundColor`, `selectedColor`, `hoveredColor`, `titleStyle`, `subtitleStyle`, `highlightColor`, `highlightStyle`, `dividerColor`, `iconColor`, `sectionHeaderStyle`, `sectionHeaderBackgroundColor`, `contentPadding`, `itemSpacing`, `imageSize`, `imageBorderRadius`
 
+### 6 Built-in Style Presets (in Demo)
+
+| Preset | Look & Feel |
+|--------|------------|
+| **Minimal** | Clean flat borders, zero elevation |
+| **Modern SaaS** | Rounded bars, subtle shadows, primary highlights |
+| **Dark** | Dark backgrounds, teal accents |
+| **Social** | Pill-shaped bar, compact items |
+| **Glass** | Glassmorphism on gradient background |
+| **Dark Premium** | Deep navy + red accent, elevated shadows |
+
 ---
 
 ## 🎞️ Animations
@@ -347,9 +569,41 @@ SearchScaffold<Product>(
   controller: controller,
   layout: isWide ? SearchResultsLayout.grid : SearchResultsLayout.list,
   gridCrossAxisCount: isWide ? 3 : 2,
-  density: isCompact ? SearchResultDensity.compact : SearchResultDensity.comfortable,
+  density: isCompact
+      ? SearchResultDensity.compact
+      : SearchResultDensity.comfortable,
 )
 ```
+
+---
+
+## 🎬 Demo Video Scenarios
+
+Use the **Interactive Demo** screen to record these scenarios:
+
+| # | Scenario | Settings |
+|---|----------|----------|
+| 1 | **Basic search** | Products, SaaS style, fadeSlideUp, List |
+| 2 | **Loading state** | Force: Loading, 2000 ms delay |
+| 3 | **Empty state** | Search "xyz", observe empty UI |
+| 4 | **Error & retry** | Force: Error, then tap retry |
+| 5 | **Grid layout** | Products, Grid, Rich density |
+| 6 | **Dark mode** | Dark style, staggered animation |
+| 7 | **Glassmorphism** | Glass style, scale animation |
+| 8 | **Social app feel** | Users dataset, Social style |
+| 9 | **Overlay mode** | Toggle overlay on, search products |
+| 10 | **Dark Premium** | Premium style, staggered animation |
+
+---
+
+## 📊 Performance Notes
+
+- Use **local adapter** for low-latency offline search
+- **Debouncing** reduces unnecessary network calls for remote APIs
+- Keep `maxResults` realistic for your UI layout and device class
+- Consider **caching** remote results for hybrid experiences
+- Use **sectioned** or paged strategies for very large datasets
+- Fuzzy search adds overhead — enable only when needed
 
 ---
 
@@ -391,55 +645,7 @@ controller.state.history; // ['flutter']
 controller.clearHistory();
 ```
 
----
-
-## 🎯 Use Cases
-
-### E-Commerce Product Search
-
-```dart
-LocalSearchAdapter<Product>(
-  items: products,
-  searchableFields: (p) => [p.name, p.brand, p.category, p.sku],
-  toResult: (p) => SearchResult(
-    id: p.id, title: p.name,
-    subtitle: '\$${p.price}',
-    imageUrl: p.imageUrl, data: p,
-  ),
-  enableFuzzySearch: true,
-)
-```
-
-### Social App People Search
-
-```dart
-RemoteSearchAdapter<User>(
-  searchFunction: (query, limit, offset) => api.searchUsers(query),
-  suggestFunction: (query) => api.suggestUsers(query),
-)
-```
-
-### Knowledge Base / Help Center
-
-```dart
-HybridSearchAdapter<Article>(
-  localAdapter: localArticles,     // Cached articles
-  remoteAdapter: remoteArticles,   // API for latest
-  localWeight: 1.2,                // Prefer local (faster)
-  remoteWeight: 1.0,
-  deduplicateById: true,
-)
-```
-
-### Settings / Preference Search
-
-```dart
-LocalSearchAdapter<Setting>(
-  items: allSettings,
-  searchableFields: (s) => [s.title, s.description, s.keywords.join(' ')],
-  toResult: (s) => SearchResult(id: s.key, title: s.title, subtitle: s.description),
-)
-```
+For persistent history, use `SearchHistoryManager` with a custom `SearchHistoryStorage`.
 
 ---
 
@@ -453,7 +659,7 @@ class AlgoliaSearchAdapter extends SearchAdapter<Product> {
   Future<List<SearchResult<Product>>> search(
     String query, {int limit = 50, int offset = 0}
   ) async {
-    final response = await algolia.search(query, hitsPerPage: limit, page: offset ~/ limit);
+    final response = await algolia.search(query);
     return response.hits.map((hit) => SearchResult<Product>(
       id: hit.objectID,
       title: hit['name'],
@@ -469,77 +675,6 @@ Works with: **REST**, **GraphQL**, **gRPC**, **Hive**, **Isar**, **SQLite**, **E
 
 ---
 
-## 🎬 Demo Video Scenarios
-
-Use the **Interactive Demo** screen to record these scenarios:
-
-| # | Scenario | Settings |
-|---|----------|----------|
-| 1 | **Basic search** | Products, SaaS style, fadeSlideUp, List |
-| 2 | **Loading state** | Force: Loading, 2000 ms delay |
-| 3 | **Empty state** | Search "xyz", observe empty UI |
-| 4 | **Error & retry** | Force: Error, then tap retry |
-| 5 | **Grid layout** | Products, Grid, Rich density |
-| 6 | **Dark mode** | Dark style, staggered animation |
-| 7 | **Glassmorphism** | Glass style, scale animation |
-| 8 | **Social app feel** | Users dataset, Social style |
-| 9 | **Fast local** | 100 ms delay, minimal style |
-| 10 | **Slow network** | 3000 ms delay, shimmer visible |
-
----
-
-## 📊 Performance Notes
-
-- Use **local adapter** for low-latency offline search
-- **Debouncing** reduces unnecessary network calls for remote APIs
-- Keep `maxResults` realistic for your UI layout and device class
-- Consider **caching** remote results for hybrid experiences
-- Use **sectioned** or paged strategies for very large datasets
-- Fuzzy search adds overhead — enable only when needed
-
----
-
-## 🧠 Developer Notes
-
-### Clean Code Philosophy
-
-- **Separation of concerns**: UI, state, and data are fully decoupled
-- **Immutable state**: `SearchState` and `SearchResult` are immutable
-- **Generic types**: Full type safety with `SearchAdapter<T>`, `SearchResult<T>`
-- **No external dependencies**: Zero runtime dependencies beyond Flutter SDK
-- **Tree-shakeable**: Import only what you use
-
-### Architecture Overview
-
-```
-lib/
-├── search_plus.dart              # Public API barrel file
-└── src/
-    ├── adapters/                 # Data source abstractions
-    │   ├── search_adapter.dart   # Base interface + ranking config
-    │   ├── local_search_adapter.dart
-    │   ├── remote_search_adapter.dart
-    │   └── hybrid_search_adapter.dart
-    ├── animations/               # Animation system
-    │   └── animation_presets.dart
-    ├── core/                     # Business logic
-    │   ├── search_controller.dart
-    │   ├── search_result.dart
-    │   └── search_state.dart
-    ├── l10n/                     # Localization
-    │   └── search_localizations.dart
-    ├── theme/                    # Theming
-    │   └── search_theme.dart
-    └── ui/                       # Widgets
-        ├── search_scaffold.dart
-        ├── search_bar_widget.dart
-        ├── search_results_widget.dart
-        └── states/
-            └── search_states.dart
-```
-
----
-
 ## 📤 API Reference
 
 ### Core Classes
@@ -550,6 +685,9 @@ lib/
 | `SearchResult<T>` | Immutable result model with score, metadata, source |
 | `SearchState<T>` | Immutable state: query, results, status, suggestions, history |
 | `SearchStatus` | Enum: `idle`, `loading`, `success`, `empty`, `error` |
+| `SearchConfig` | Advanced behavior options: debounce, trim, case, limits |
+| `SearchHistoryManager` | Manages history with dedup, limits, and persistence |
+| `SearchHistoryStorage` | Abstract interface for history storage backends |
 
 ### Adapters
 
@@ -568,6 +706,7 @@ lib/
 | `SearchScaffold<T>` | Complete search UI (bar + results + states) |
 | `SearchPlusBar` | Standalone Material 3 search input |
 | `SearchResultsWidget<T>` | Results display (list / grid / sectioned) |
+| `SearchOverlay<T>` | Floating dropdown result panel |
 | `SearchEmptyState` | No-results UI |
 | `SearchErrorState` | Error UI with retry |
 | `SearchLoadingState` | Loading UI with shimmer |
@@ -585,6 +724,80 @@ lib/
 | `SearchResultThemeData` | Result item visual properties |
 | `SearchLocalizationsProvider` | InheritedWidget for l10n propagation |
 | `SearchLocalizations` | All customizable strings |
+
+---
+
+## 🧠 Developer Notes
+
+### Architecture Overview
+
+```
+lib/
+├── search_plus.dart              # Public API barrel file
+└── src/
+    ├── adapters/                 # Data source abstractions
+    │   ├── search_adapter.dart
+    │   ├── local_search_adapter.dart
+    │   ├── remote_search_adapter.dart
+    │   └── hybrid_search_adapter.dart
+    ├── animations/               # Animation system
+    │   └── animation_presets.dart
+    ├── core/                     # Business logic
+    │   ├── search_controller.dart
+    │   ├── search_result.dart
+    │   ├── search_state.dart
+    │   ├── search_config.dart
+    │   └── search_history_storage.dart
+    ├── l10n/                     # Localization
+    │   └── search_localizations.dart
+    ├── theme/                    # Theming
+    │   └── search_theme.dart
+    └── ui/                       # Widgets
+        ├── search_scaffold.dart
+        ├── search_bar_widget.dart
+        ├── search_results_widget.dart
+        ├── search_overlay.dart
+        └── states/
+            └── search_states.dart
+```
+
+### Clean Code Philosophy
+
+- **Separation of concerns**: UI, state, and data are fully decoupled
+- **Immutable state**: `SearchState` and `SearchResult` are immutable
+- **Generic types**: Full type safety with `SearchAdapter<T>`, `SearchResult<T>`
+- **No external dependencies**: Zero runtime dependencies beyond Flutter SDK
+- **Tree-shakeable**: Import only what you use
+
+---
+
+## 🛠 Troubleshooting
+
+### Search returns "No results found" unexpectedly
+
+- Verify your `searchableFields` callback returns the right strings
+- Check `minQueryLength` — queries shorter than this won't trigger search
+- Ensure your fake/remote API actually matches the query (case-insensitive by default)
+
+### Overlay doesn't close on outside tap
+
+- `SearchOverlay` auto-closes on focus loss with a 150ms delay
+- If using custom focus management, ensure the focus node can lose focus
+
+### Animations are not visible
+
+- Check `animationConfig.enabled` is `true`
+- Ensure `animationConfig.preset` is not `SearchAnimationPreset.none`
+- Try increasing `duration` for more noticeable effects
+
+### History isn't persisted
+
+- The default `InMemoryHistoryStorage` loses data on restart
+- Use `SecureFallbackHistoryStorage` or implement `SearchHistoryStorage` for persistence
+
+### Import conflicts with Flutter's `SearchBarThemeData`
+
+- Use `import 'package:flutter/material.dart' hide SearchBarThemeData;` to resolve conflicts
 
 ---
 
