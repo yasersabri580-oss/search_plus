@@ -348,8 +348,10 @@ class FakeSearchApi {
   final _random = Random();
 
   Future<void> _simulateDelay() async {
-    final range = maxDelay.inMilliseconds - minDelay.inMilliseconds;
-    final delay = minDelay.inMilliseconds + _random.nextInt(range.clamp(1, 5000));
+    final minMs = minDelay.inMilliseconds;
+    final maxMs = maxDelay.inMilliseconds;
+    final range = (maxMs > minMs) ? maxMs - minMs : 0;
+    final delay = minMs + (range > 0 ? _random.nextInt(range) : 0);
     await Future<void>.delayed(Duration(milliseconds: delay));
   }
 

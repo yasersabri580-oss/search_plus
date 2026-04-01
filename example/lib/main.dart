@@ -165,7 +165,7 @@ class _ExampleHub extends StatelessWidget {
           _ExampleCard(
             icon: Icons.science,
             title: 'Interactive Demo',
-            subtitle: 'Control panel for testing every feature. Perfect for recording demos.',
+            subtitle: 'Control panel for testing every feature. Ideal for recording demos.',
             color: Colors.red,
             onTap: () => _push(context, const SearchPlusDemo()),
           ),
