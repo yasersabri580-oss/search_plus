@@ -20,7 +20,7 @@ class SearchPlusDemo extends StatefulWidget {
 
 enum _Dataset { products, users, articles }
 
-enum _StylePreset { minimal, modernSaas, dark, social, glass }
+enum _StylePreset { minimal, modernSaas, dark, social, glass, darkPremium }
 
 enum _ForcedState { none, loading, empty, error }
 
@@ -37,6 +37,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
   SearchResultDensity _density = SearchResultDensity.comfortable;
   _ForcedState _forcedState = _ForcedState.none;
   double _simulatedDelay = 600;
+  bool _overlayMode = false;
 
   // -- API & controller --
   late FakeSearchApi _api;
@@ -86,6 +87,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
         _controller = SearchPlusController<Article>(
           adapter: RemoteSearchAdapter<Article>(
             searchFunction: (q, limit, offset) => _api.searchArticles(q, limit: limit, offset: offset),
+            suggestFunction: _api.suggestArticles,
           ),
           debounceDuration: const Duration(milliseconds: 300),
           maxHistoryItems: 8,
@@ -175,6 +177,25 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
             subtitleStyle: TextStyle(color: Colors.white.withAlpha(180)),
           ),
         );
+      case _StylePreset.darkPremium:
+        return SearchThemeData(
+          searchBarTheme: SearchBarThemeData(
+            borderRadius: BorderRadius.circular(14),
+            backgroundColor: const Color(0xFF1A1A2E),
+            focusedBackgroundColor: const Color(0xFF16213E),
+            borderColor: const Color(0xFF0F3460),
+            focusedBorderColor: const Color(0xFFE94560),
+            elevation: 0,
+            focusedElevation: 4,
+            shadowColor: const Color(0xFFE94560).withAlpha(40),
+          ),
+          resultTheme: const SearchResultThemeData(
+            backgroundColor: Color(0xFF1A1A2E),
+            highlightColor: Color(0xFF0F3460),
+            titleStyle: TextStyle(color: Color(0xFFEEEEEE)),
+            subtitleStyle: TextStyle(color: Color(0xFF888888)),
+          ),
+        );
     }
   }
 
@@ -183,7 +204,8 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
   @override
   Widget build(BuildContext context) {
     final isGlass = _style == _StylePreset.glass;
-    final isDarkStyle = _style == _StylePreset.dark;
+    final isDarkStyle =
+        _style == _StylePreset.dark || _style == _StylePreset.darkPremium;
 
     Widget body = _buildSearchBody(context);
 
@@ -207,7 +229,9 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
     // Dark style background
     if (isDarkStyle) {
       body = ColoredBox(
-        color: const Color(0xFF121212),
+        color: _style == _StylePreset.darkPremium
+            ? const Color(0xFF0A0A23)
+            : const Color(0xFF121212),
         child: body,
       );
     }
@@ -216,7 +240,11 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
       data: isDarkStyle || isGlass
           ? ThemeData.dark(useMaterial3: true).copyWith(
               colorScheme: ColorScheme.fromSeed(
-                seedColor: isGlass ? Colors.deepPurple : Colors.teal,
+                seedColor: isGlass
+                    ? Colors.deepPurple
+                    : _style == _StylePreset.darkPremium
+                        ? const Color(0xFFE94560)
+                        : Colors.teal,
                 brightness: Brightness.dark,
               ),
             )
@@ -239,6 +267,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
           density: _density,
           forcedState: _forcedState,
           simulatedDelay: _simulatedDelay,
+          overlayMode: _overlayMode,
           onDatasetChanged: (v) {
             setState(() => _dataset = v);
             _rebuildController();
@@ -255,6 +284,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
             setState(() => _simulatedDelay = v);
             _rebuildController();
           },
+          onOverlayChanged: (v) => setState(() => _overlayMode = v),
         ),
         body: body,
       ),
@@ -269,53 +299,102 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
 
     return SearchTheme(
       data: _themeForPreset(context),
+      child: _overlayMode
+          ? _buildOverlayBody(context)
+          : _buildInlineBody(context, overrideState),
+    );
+  }
+
+  Widget _buildOverlayBody(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: SearchPlusBar(
-              onChanged: (q) => _controller!.search(q),
-              onSubmitted: (q) {
-                _controller!.addToHistory(q);
-                _controller!.searchImmediate(q);
-              },
-              hintText: 'Search ${_dataset.name}…',
-              leading: const Icon(Icons.search),
+          SearchOverlay<dynamic>(
+            controller: _controller!,
+            hintText: 'Search ${_dataset.name}…',
+            maxOverlayHeight: 350,
+            animationConfig: SearchAnimationConfig(
+              preset: _animation,
+              duration: const Duration(milliseconds: 250),
             ),
-          ),
-          Expanded(
-            child: ListenableBuilder(
-              listenable: _controller!,
-              builder: (context, _) {
-                final state = overrideState ?? _controller!.state;
-                return SearchResultsWidget<dynamic>(
-                  state: state,
-                  layout: _layout,
-                  density: _density,
-                  animationConfig: SearchAnimationConfig(
-                    preset: _animation,
-                    duration: const Duration(milliseconds: 300),
-                    staggerDelay: const Duration(milliseconds: 50),
-                  ),
-                  showShimmer: true,
-                  gridCrossAxisCount: 2,
-                  emptyState: const SearchEmptyState(
-                    icon: Icon(Icons.search_off, size: 64),
-                    title: 'Nothing found',
-                    subtitle: 'Try a different keyword.',
-                  ),
-                  errorState: SearchErrorState(
-                    icon: const Icon(Icons.error_outline, size: 64),
-                    message: 'Simulated error. Tap retry.',
-                    onRetry: () =>
-                        _controller!.searchImmediate(_controller!.query),
-                  ),
+            onItemTap: (result) {
+              ScaffoldMessenger.of(context)
+                ..hideCurrentSnackBar()
+                ..showSnackBar(
+                  SnackBar(content: Text('Selected: ${result.title}')),
                 );
-              },
+            },
+          ),
+          const SizedBox(height: 32),
+          Expanded(
+            child: Center(
+              child: Text(
+                'Overlay mode — results appear above this content',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: Theme.of(context)
+                          .colorScheme
+                          .onSurfaceVariant
+                          .withValues(alpha: 0.6),
+                    ),
+                textAlign: TextAlign.center,
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildInlineBody(
+      BuildContext context, SearchState<dynamic>? overrideState) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: SearchPlusBar(
+            onChanged: (q) => _controller!.search(q),
+            onSubmitted: (q) {
+              _controller!.addToHistory(q);
+              _controller!.searchImmediate(q);
+            },
+            hintText: 'Search ${_dataset.name}…',
+            leading: const Icon(Icons.search),
+          ),
+        ),
+        Expanded(
+          child: ListenableBuilder(
+            listenable: _controller!,
+            builder: (context, _) {
+              final state = overrideState ?? _controller!.state;
+              return SearchResultsWidget<dynamic>(
+                state: state,
+                layout: _layout,
+                density: _density,
+                animationConfig: SearchAnimationConfig(
+                  preset: _animation,
+                  duration: const Duration(milliseconds: 300),
+                  staggerDelay: const Duration(milliseconds: 50),
+                ),
+                showShimmer: true,
+                gridCrossAxisCount: 2,
+                emptyState: const SearchEmptyState(
+                  icon: Icon(Icons.search_off, size: 64),
+                  title: 'Nothing found',
+                  subtitle: 'Try a different keyword.',
+                ),
+                errorState: SearchErrorState(
+                  icon: const Icon(Icons.error_outline, size: 64),
+                  message: 'Simulated error. Tap retry.',
+                  onRetry: () =>
+                      _controller!.searchImmediate(_controller!.query),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -356,6 +435,7 @@ class _ControlDrawer extends StatelessWidget {
     required this.density,
     required this.forcedState,
     required this.simulatedDelay,
+    required this.overlayMode,
     required this.onDatasetChanged,
     required this.onStyleChanged,
     required this.onAnimationChanged,
@@ -363,6 +443,7 @@ class _ControlDrawer extends StatelessWidget {
     required this.onDensityChanged,
     required this.onForcedStateChanged,
     required this.onDelayChanged,
+    required this.onOverlayChanged,
   });
 
   final _Dataset dataset;
@@ -372,6 +453,7 @@ class _ControlDrawer extends StatelessWidget {
   final SearchResultDensity density;
   final _ForcedState forcedState;
   final double simulatedDelay;
+  final bool overlayMode;
   final ValueChanged<_Dataset> onDatasetChanged;
   final ValueChanged<_StylePreset> onStyleChanged;
   final ValueChanged<SearchAnimationPreset> onAnimationChanged;
@@ -379,6 +461,7 @@ class _ControlDrawer extends StatelessWidget {
   final ValueChanged<SearchResultDensity> onDensityChanged;
   final ValueChanged<_ForcedState> onForcedStateChanged;
   final ValueChanged<double> onDelayChanged;
+  final ValueChanged<bool> onOverlayChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -431,16 +514,24 @@ class _ControlDrawer extends StatelessWidget {
 
             // Style
             _SectionTitle('Style'),
-            SegmentedButton<_StylePreset>(
-              segments: const [
-                ButtonSegment(value: _StylePreset.minimal, label: Text('Min')),
-                ButtonSegment(value: _StylePreset.modernSaas, label: Text('SaaS')),
-                ButtonSegment(value: _StylePreset.dark, label: Text('Dark')),
-                ButtonSegment(value: _StylePreset.social, label: Text('Social')),
-                ButtonSegment(value: _StylePreset.glass, label: Text('Glass')),
-              ],
-              selected: {style},
-              onSelectionChanged: (v) => onStyleChanged(v.first),
+            Wrap(
+              spacing: 8,
+              runSpacing: 4,
+              children: _StylePreset.values.map((preset) {
+                final labels = {
+                  _StylePreset.minimal: 'Min',
+                  _StylePreset.modernSaas: 'SaaS',
+                  _StylePreset.dark: 'Dark',
+                  _StylePreset.social: 'Social',
+                  _StylePreset.glass: 'Glass',
+                  _StylePreset.darkPremium: 'Premium',
+                };
+                return ChoiceChip(
+                  label: Text(labels[preset]!),
+                  selected: style == preset,
+                  onSelected: (_) => onStyleChanged(preset),
+                );
+              }).toList(),
             ),
             const SizedBox(height: 20),
 
@@ -536,6 +627,16 @@ class _ControlDrawer extends StatelessWidget {
               value: simulatedDelay,
               label: '${simulatedDelay.round()} ms',
               onChanged: onDelayChanged,
+            ),
+            const SizedBox(height: 20),
+
+            // Overlay mode
+            _SectionTitle('Result Mode'),
+            SwitchListTile(
+              title: const Text('Overlay Dropdown'),
+              subtitle: const Text('Show results in floating panel'),
+              value: overlayMode,
+              onChanged: onOverlayChanged,
             ),
           ],
         ),
