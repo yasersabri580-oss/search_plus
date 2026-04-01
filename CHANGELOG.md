@@ -1,3 +1,5 @@
+# Changelog
+
 ## 2.0.0
 
 - Initial stable release of **search_plus**.

@@ -1,11 +1,9 @@
 # 🔍 Search Plus
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Flutter-3.22+-02569B?logo=flutter&logoColor=white" alt="Flutter" />
-  <img src="https://img.shields.io/badge/Dart-3.10+-0175C2?logo=dart&logoColor=white" alt="Dart" />
-  <img src="https://img.shields.io/badge/License-MIT-green" alt="License" />
-  <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web%20%7C%20Desktop-blue" alt="Platform" />
-</p>
+![Flutter](https://img.shields.io/badge/Flutter-3.22+-02569B?logo=flutter&logoColor=white)
+![Dart](https://img.shields.io/badge/Dart-3.10+-0175C2?logo=dart&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green)
+![Platform](https://img.shields.io/badge/Platform-iOS%20%7C%20Android%20%7C%20Web%20%7C%20Desktop-blue)
 
 **Production-grade Flutter search — local, remote, and hybrid — with polished UI, overlay mode, theming, animations, persistent history, and a developer experience you'll love.**
 
@@ -31,20 +29,6 @@ Ship fast, beautiful search experiences across mobile, web, and desktop using a 
 | 🧠 **Suggestions + History** | Built-in support in controller and adapters |
 | ♿ **Accessible** | Semantic labels, tooltips, keyboard-friendly |
 | 📱 **Responsive** | Adaptive layouts for phone, tablet, and desktop |
-
----
-
-## 🎥 Preview
-
-> Replace the placeholders below with your own GIFs/screenshots.
-
-| Local Search | Remote API Search | Overlay Mode |
-|:---:|:---:|:---:|
-| ![Local](https://via.placeholder.com/280x500/6A4CFF/fff?text=Local+Search) | ![Remote](https://via.placeholder.com/280x500/6A4CFF/fff?text=Remote+Search) | ![Overlay](https://via.placeholder.com/280x500/6A4CFF/fff?text=Overlay+Mode) |
-
-| Interactive Demo | 6 Style Presets | Dark Premium |
-|:---:|:---:|:---:|
-| ![Demo](https://via.placeholder.com/280x500/6A4CFF/fff?text=Demo+Screen) | ![Styles](https://via.placeholder.com/280x500/6A4CFF/fff?text=6+Styles) | ![Premium](https://via.placeholder.com/280x500/6A4CFF/fff?text=Dark+Premium) |
 
 ---
 
@@ -308,6 +292,7 @@ SearchOverlay<Product>(
 ```
 
 **Overlay behavior:**
+
 - Opens when results become available
 - Closes on outside tap, Escape, or focus loss
 - Smooth fade-in/out animation
@@ -405,6 +390,7 @@ final suggestions = await api.suggestProducts('wire');
 ```
 
 **Features:**
+
 - Configurable simulated delay
 - Configurable error rate for error state testing
 - Three datasets: users (10 items), products (12 items), articles (8 items)

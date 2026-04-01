@@ -2,7 +2,7 @@
 ///
 /// Supports async API search, local/offline search, hybrid search,
 /// rich UI, theming, animations, overlay mode, and localization.
-library search_plus;
+library;
 
 // Core
 export 'src/core/search_controller.dart';

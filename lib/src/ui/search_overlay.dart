@@ -4,7 +4,6 @@ import '../animations/animation_presets.dart';
 import '../core/search_controller.dart';
 import '../core/search_result.dart';
 import '../core/search_state.dart';
-import '../theme/search_theme.dart';
 import 'search_bar_widget.dart';
 import 'states/search_states.dart';
 

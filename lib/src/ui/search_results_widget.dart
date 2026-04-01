@@ -431,7 +431,7 @@ class _DefaultResultItem<T> extends StatelessWidget {
                     width: resultTheme.imageSize ?? 48,
                     height: resultTheme.imageSize ?? 48,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => Container(
+                    errorBuilder: (_, _, _) => Container(
                       width: resultTheme.imageSize ?? 48,
                       height: resultTheme.imageSize ?? 48,
                       decoration: BoxDecoration(
