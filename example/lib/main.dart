@@ -5,6 +5,7 @@ import 'examples/intermediate_example.dart';
 import 'examples/advanced_example.dart';
 import 'examples/full_showcase_example.dart';
 import 'examples/original_example.dart';
+import 'examples/overlay_example.dart';
 import 'searchplus_demo.dart';
 
 void main() {
@@ -160,6 +161,13 @@ class _ExampleHub extends StatelessWidget {
             subtitle: 'Local + remote + hybrid with full settings.',
             color: Colors.teal,
             onTap: () => _push(context, const OriginalExample()),
+          ),
+          _ExampleCard(
+            icon: Icons.layers_outlined,
+            title: 'Overlay Example',
+            subtitle: 'Floating dropdown results over content.',
+            color: Colors.indigo,
+            onTap: () => _push(context, const OverlayExample()),
           ),
           const Divider(height: 32),
           _ExampleCard(
