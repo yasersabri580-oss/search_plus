@@ -36,3 +36,6 @@ export 'src/l10n/search_localizations.dart';
 // Utilities
 export 'src/utils/search_logger.dart';
 
+// Debug
+export 'src/ui/debug/search_debug_panel.dart';
+
