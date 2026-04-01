@@ -62,17 +62,20 @@ class _BasicExampleState extends State<BasicExample> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Basic Example')),
-      body: SearchScaffold<String>(
+      body: SearchDebugPanel<String>(
         controller: _controller,
+        child: SearchScaffold<String>(
+          controller: _controller,
 
-        hintText: 'Search fruits…',
-        onItemTap: (result) {
-          ScaffoldMessenger.of(context)
-            ..hideCurrentSnackBar()
-            ..showSnackBar(
-              SnackBar(content: Text('Selected: ${result.title}')),
-            );
-        },
+          hintText: 'Search fruits\u2026',
+          onItemTap: (result) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(content: Text('Selected: ${result.title}')),
+              );
+          },
+        ),
       ),
     );
   }

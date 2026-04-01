@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:search_plus/search_plus.dart';
 
 import 'examples/basic_example.dart';
 import 'examples/intermediate_example.dart';
@@ -9,6 +10,9 @@ import 'examples/overlay_example.dart';
 import 'searchplus_demo.dart';
 
 void main() {
+  // Enable search_plus logging for demo/debugging purposes.
+  SearchLogger.enable(level: SearchLogLevel.debug);
+
   runApp(const SearchPlusExampleApp());
 }
 
