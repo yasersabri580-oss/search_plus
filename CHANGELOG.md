@@ -1,6 +1,6 @@
 # Changelog
 
-## 2.0.0
+## 2.1.0
 
 - Initial stable release of **search_plus**.
 - Added async API search with debouncing, cancellation safety, pagination hooks, and remote adapter support.
