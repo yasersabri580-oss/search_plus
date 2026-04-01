@@ -45,8 +45,6 @@ void main() {
       expect(controller.hasResults, isTrue);
 
       controller.clear();
-      // After clear, need to wait for the stream event
-      await Future.delayed(Duration.zero);
       expect(controller.status, SearchStatus.idle);
       expect(controller.results, isEmpty);
     });
