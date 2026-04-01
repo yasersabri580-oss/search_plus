@@ -352,12 +352,14 @@ class FakeSearchApi {
     final maxMs = maxDelay.inMilliseconds;
     final range = (maxMs > minMs) ? maxMs - minMs : 0;
     final delay = minMs + (range > 0 ? _random.nextInt(range) : 0);
+    SearchLogger.fakeApi('simulating ${delay}ms delay');
     await Future<void>.delayed(Duration(milliseconds: delay));
   }
 
   void _maybeThrow() {
     if (errorRate > 0 && _random.nextDouble() < errorRate) {
-      throw Exception('Simulated network error — please retry.');
+      SearchLogger.fakeApi('throwing simulated error (rate=$errorRate)');
+      throw Exception('Simulated network error \u2014 please retry.');
     }
   }
 

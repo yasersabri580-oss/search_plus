@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../adapters/search_adapter.dart';
+import '../utils/search_logger.dart';
 import 'search_result.dart';
 import 'search_state.dart';
 
@@ -53,6 +54,7 @@ class SearchEngine<T> {
   /// Cancels any pending search. Only the latest query's results are emitted.
   void search(String query) {
     _debounceTimer?.cancel();
+    SearchLogger.searchQuery(query);
 
     if (query.length < minQueryLength) {
       _emit(_currentState.copyWith(
@@ -77,6 +79,7 @@ class SearchEngine<T> {
   /// Performs an immediate search without debouncing.
   Future<void> searchImmediate(String query) async {
     _debounceTimer?.cancel();
+    SearchLogger.searchQuery(query, immediate: true);
     if (query.length < minQueryLength) {
       _emit(_currentState.copyWith(
         query: query,
@@ -91,8 +94,12 @@ class SearchEngine<T> {
   Future<void> _executeSearch(String query) async {
     final requestId = ++_requestId;
 
+    final stopwatch = Stopwatch()..start();
     try {
       final results = await adapter.search(query, limit: maxResults);
+      stopwatch.stop();
+      SearchLogger.adapterResults(
+          adapter.runtimeType.toString(), results.length, stopwatch.elapsed);
 
       // Only emit if this is still the latest request (cancellation)
       if (requestId != _requestId) return;
@@ -111,7 +118,11 @@ class SearchEngine<T> {
           status: SearchStatus.success,
         ));
       }
-    } catch (e) {
+    } catch (e, st) {
+      stopwatch.stop();
+      SearchLogger.adapterError(adapter.runtimeType.toString(), e,
+          stackTrace: st);
+
       if (requestId != _requestId) return;
 
       _emit(_currentState.copyWith(
@@ -125,8 +136,12 @@ class SearchEngine<T> {
   /// Fetches search suggestions for the given [query].
   Future<List<String>> suggest(String query) async {
     try {
-      return await adapter.suggest(query);
-    } catch (_) {
+      final suggestions = await adapter.suggest(query);
+      SearchLogger.debug(
+          '[Suggest] ${suggestions.length} suggestion(s) for "$query"');
+      return suggestions;
+    } catch (e) {
+      SearchLogger.warning('[Suggest] failed for "$query": $e');
       return const [];
     }
   }
@@ -135,11 +150,20 @@ class SearchEngine<T> {
   void clear() {
     _debounceTimer?.cancel();
     _requestId++;
+    SearchLogger.info('[Search] clear');
     _emit(const SearchState());
   }
 
   void _emit(SearchState<T> state) {
+    final oldStatus = _currentState.status;
     _currentState = state;
+    if (oldStatus != state.status) {
+      SearchLogger.stateTransition(
+        oldStatus.name,
+        state.status.name,
+        query: state.query,
+      );
+    }
     if (!_stateController.isClosed) {
       _stateController.add(state);
     }
