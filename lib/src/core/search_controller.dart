@@ -34,7 +34,11 @@ class SearchEngine<T> {
   int _requestId = 0;
 
   /// Stream controller for search states.
-  final _stateController = StreamController<SearchState<T>>.broadcast();
+  ///
+  /// Uses a synchronous controller so that listeners are notified immediately
+  /// when state changes, ensuring that awaiting [searchImmediate] or calling
+  /// [clear] reflects the updated state without a microtask delay.
+  final _stateController = StreamController<SearchState<T>>.broadcast(sync: true);
 
   /// Stream of search state changes.
   Stream<SearchState<T>> get stateStream => _stateController.stream;
