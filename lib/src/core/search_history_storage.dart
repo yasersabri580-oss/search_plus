@@ -157,13 +157,13 @@ class SearchHistoryManager {
     if (_items.length > maxItems) {
       _items.removeLast();
     }
-    await _storage.save(List.unmodifiable(_items));
+    await _storage.save(List.of(_items));
   }
 
   /// Removes a specific item from history.
   Future<void> remove(String query) async {
     _items.remove(query);
-    await _storage.save(List.unmodifiable(_items));
+    await _storage.save(List.of(_items));
   }
 
   /// Clears all history.
