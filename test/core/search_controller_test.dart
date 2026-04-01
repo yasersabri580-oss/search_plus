@@ -99,5 +99,24 @@ void main() {
 
       ctrl.dispose();
     });
+
+    test('error message is propagated to state', () async {
+      final errorMessage = 'Test error from adapter';
+      final controller = SearchPlusController<String>(
+        adapter: RemoteSearchAdapter<String>(
+          searchFunction: (query, limit, offset) async {
+            throw Exception(errorMessage);
+          },
+        ),
+        debounceDuration: Duration.zero,
+      );
+
+      await controller.searchImmediate('test');
+      expect(controller.status, SearchStatus.error);
+      expect(controller.state.error, isNotNull);
+      expect(controller.state.error, contains(errorMessage));
+
+      controller.dispose();
+    });
   });
 }
