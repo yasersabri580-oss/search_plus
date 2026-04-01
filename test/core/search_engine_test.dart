@@ -273,7 +273,7 @@ void main() {
     });
 
     test('returns remote results when local adapter fails', () async {
-      final local = RemoteSearchAdapter<String>(
+      final failingLocal = RemoteSearchAdapter<String>(
         searchFunction: (query, limit, offset) async {
           throw Exception('Local error');
         },
@@ -293,7 +293,7 @@ void main() {
       );
 
       final hybrid = HybridSearchAdapter<String>(
-        localAdapter: local,
+        localAdapter: failingLocal,
         remoteAdapter: remote,
         deduplicateById: false,
       );
@@ -304,21 +304,21 @@ void main() {
     });
 
     test('throws when both adapters fail', () async {
-      final local = RemoteSearchAdapter<String>(
+      final failingLocal = RemoteSearchAdapter<String>(
         searchFunction: (query, limit, offset) async {
           throw Exception('Local error');
         },
       );
 
-      final remote = RemoteSearchAdapter<String>(
+      final failingRemote = RemoteSearchAdapter<String>(
         searchFunction: (query, limit, offset) async {
           throw Exception('Remote error');
         },
       );
 
       final hybrid = HybridSearchAdapter<String>(
-        localAdapter: local,
-        remoteAdapter: remote,
+        localAdapter: failingLocal,
+        remoteAdapter: failingRemote,
       );
 
       expect(
