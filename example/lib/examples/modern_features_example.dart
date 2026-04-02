@@ -84,6 +84,7 @@ class _ModernFeaturesExampleState extends State<ModernFeaturesExample> {
             focusedElevation: 4,
           ),
           resultTheme: const SearchResultThemeData(),
+          overlayTheme: const SearchOverlayThemeData(),
         ),
         child: ListenableBuilder(
           listenable: _controller,
