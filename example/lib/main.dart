@@ -5,6 +5,7 @@ import 'examples/basic_example.dart';
 import 'examples/intermediate_example.dart';
 import 'examples/advanced_example.dart';
 import 'examples/full_showcase_example.dart';
+import 'examples/modern_features_example.dart';
 import 'examples/original_example.dart';
 import 'examples/overlay_example.dart';
 import 'searchplus_demo.dart';
@@ -165,6 +166,13 @@ class _ExampleHub extends StatelessWidget {
             subtitle: 'Local + remote + hybrid with full settings.',
             color: Colors.teal,
             onTap: () => _push(context, const OriginalExample()),
+          ),
+          _ExampleCard(
+            icon: Icons.auto_awesome,
+            title: 'Modern Features',
+            subtitle: 'New API: suggestion chips, history, pagination, debug config.',
+            color: Colors.pink,
+            onTap: () => _push(context, const ModernFeaturesExample()),
           ),
           _ExampleCard(
             icon: Icons.layers_outlined,
