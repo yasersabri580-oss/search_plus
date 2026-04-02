@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 
 /// A widget that highlights matched portions of text.
 ///
-/// Renders the [text] with [matchedText] portions highlighted using
+/// Renders the [text] with [query] portions highlighted using
 /// a configurable style. Great for showing which part of a search result
 /// matched the query.
 ///
 /// ```dart
 /// HighlightText(
 ///   text: 'Flutter Framework',
-///   matchedText: 'Flu',
+///   query: 'Flu',
 ///   highlightStyle: TextStyle(
 ///     backgroundColor: Colors.yellow.withValues(alpha: 0.3),
 ///     fontWeight: FontWeight.bold,
@@ -21,9 +21,10 @@ class HighlightText extends StatelessWidget {
   const HighlightText({
     super.key,
     required this.text,
-    required this.matchedText,
+    required this.query,
     this.style,
     this.highlightStyle,
+    this.highlightColor,
     this.caseSensitive = false,
     this.maxLines,
     this.overflow = TextOverflow.ellipsis,
@@ -32,8 +33,8 @@ class HighlightText extends StatelessWidget {
   /// The full text to display.
   final String text;
 
-  /// The text to highlight within [text].
-  final String matchedText;
+  /// The query to highlight within [text].
+  final String query;
 
   /// Style for non-highlighted portions.
   final TextStyle? style;
@@ -42,6 +43,9 @@ class HighlightText extends StatelessWidget {
   ///
   /// Defaults to bold with a soft yellow background.
   final TextStyle? highlightStyle;
+
+  /// Background color for highlighted portions.
+  final Color? highlightColor;
 
   /// Whether the match is case-sensitive.
   final bool caseSensitive;
@@ -54,7 +58,7 @@ class HighlightText extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (matchedText.isEmpty) {
+    if (query.isEmpty) {
       return Text(text, style: style, maxLines: maxLines, overflow: overflow);
     }
 
@@ -63,7 +67,8 @@ class HighlightText extends StatelessWidget {
     final defaultHighlight = highlightStyle ??
         defaultStyle.copyWith(
           fontWeight: FontWeight.bold,
-          backgroundColor: theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
+          backgroundColor: highlightColor ??
+              theme.colorScheme.primaryContainer.withValues(alpha: 0.4),
           color: theme.colorScheme.onPrimaryContainer,
         );
 
@@ -80,7 +85,7 @@ class HighlightText extends StatelessWidget {
     final spans = <TextSpan>[];
 
     final textToSearch = caseSensitive ? text : text.toLowerCase();
-    final queryToFind = caseSensitive ? matchedText : matchedText.toLowerCase();
+    final queryToFind = caseSensitive ? query : query.toLowerCase();
 
     int start = 0;
     while (start < text.length) {
@@ -104,11 +109,11 @@ class HighlightText extends StatelessWidget {
 
       // Add matched text (preserving original case)
       spans.add(TextSpan(
-        text: text.substring(index, index + matchedText.length),
+        text: text.substring(index, index + query.length),
         style: matchStyle,
       ));
 
-      start = index + matchedText.length;
+      start = index + query.length;
     }
 
     return spans;
