@@ -102,6 +102,9 @@ class SearchPlusBar extends StatefulWidget {
   State<SearchPlusBar> createState() => _SearchPlusBarState();
 }
 
+/// Default duration for the debounce indicator timer.
+const Duration _kDebounceIndicatorDuration = Duration(milliseconds: 350);
+
 class _SearchPlusBarState extends State<SearchPlusBar>
     with SingleTickerProviderStateMixin {
   late TextEditingController _controller;
@@ -160,7 +163,7 @@ class _SearchPlusBarState extends State<SearchPlusBar>
           _isDebouncing = true;
         });
       }
-      _debounceIndicatorTimer = Timer(const Duration(milliseconds: 350), () {
+      _debounceIndicatorTimer = Timer(_kDebounceIndicatorDuration, () {
         if (mounted) {
           setState(() {
             _isDebouncing = false;
