@@ -23,9 +23,7 @@ class LocalSearchAdapter<T> extends SearchAdapter<T> {
   final bool enableDebug;
 
   void _log(String message) {
-    if (enableDebug) {
-      print('[LocalSearchAdapter] $message');
-    }
+   
   }
 
   @override

@@ -45,7 +45,6 @@ class _SearchDebugPanelState<T> extends State<SearchDebugPanel<T>> {
   late bool _expanded;
   final _logs = <_LogEntry>[];
   final _scrollController = ScrollController();
-  SearchLogCallback? _previousCallback;
 
   @override
   void initState() {
@@ -54,7 +53,7 @@ class _SearchDebugPanelState<T> extends State<SearchDebugPanel<T>> {
 
     // Capture logs into our in-memory buffer while preserving any existing
     // callback.
-    _previousCallback = null; // We don't chain — we own the callback.
+// We don't chain — we own the callback.
     SearchLogger.enable(
       level: SearchLogLevel.debug,
       onLog: _onLog,
