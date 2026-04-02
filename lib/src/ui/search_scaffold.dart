@@ -58,6 +58,7 @@ class SearchScaffold<T> extends StatefulWidget {
     this.localizations,
     this.addToHistoryOnSubmit = true,
     this.emptyBuilder,
+    this.onLoadMore,
   });
 
   /// The search controller.
@@ -158,6 +159,9 @@ class SearchScaffold<T> extends StatefulWidget {
   /// Receives the build context and the search query.
   final Widget Function(BuildContext context, String query)? emptyBuilder;
 
+  /// Called when the user scrolls near the end of results for pagination.
+  final VoidCallback? onLoadMore;
+
   @override
   State<SearchScaffold<T>> createState() => _SearchScaffoldState<T>();
 }
@@ -234,6 +238,7 @@ class _SearchScaffoldState<T> extends State<SearchScaffold<T>> {
                   padding: widget.resultsPadding,
                   shrinkWrap: widget.shrinkWrap,
                   emptyBuilder: widget.emptyBuilder,
+                  onLoadMore: widget.onLoadMore,
                 ),
               ),
           ],

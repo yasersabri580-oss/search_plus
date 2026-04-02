@@ -180,6 +180,8 @@ class SearchEngine<T> {
             query: query,
             results: results,
             status: SearchStatus.success,
+            hasMoreResults: results.length >= maxResults,
+            currentPage: 0,
           ),
         );
       }
@@ -417,6 +419,40 @@ class SearchPlusController<T> extends ChangeNotifier {
   void clear() {
     SearchLogger.debug('[SearchPlusController.clear] Delegating to engine');
     _engine.clear();
+  }
+
+  /// Loads the next page of results for the current query.
+  ///
+  /// Only works when [state.hasMoreResults] is `true` and the current
+  /// query is not empty. Appends new results to the existing list.
+  Future<void> loadMore() async {
+    if (!_state.hasMoreResults || _state.query.isEmpty) return;
+    SearchLogger.debug(
+      '[SearchPlusController.loadMore] Loading more for query="${_state.query}"',
+    );
+
+    final nextOffset = _state.results.length;
+    try {
+      final moreResults = await _engine.adapter.search(
+        _state.query,
+        limit: _engine.maxResults,
+        offset: nextOffset,
+      );
+
+      final allResults = [..._state.results, ...moreResults];
+      _state = _state.copyWith(
+        results: allResults,
+        hasMoreResults: moreResults.length >= _engine.maxResults,
+        currentPage: _state.currentPage + 1,
+        error: null,
+      );
+      notifyListeners();
+      SearchLogger.debug(
+        '[SearchPlusController.loadMore] Now have ${allResults.length} results, page ${_state.currentPage}',
+      );
+    } catch (e) {
+      SearchLogger.warning('[SearchPlusController.loadMore] Failed: $e');
+    }
   }
 
   @override
