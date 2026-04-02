@@ -14,7 +14,7 @@ import 'states/search_states.dart';
 /// on outside tap, Escape key, or focus loss.
 ///
 /// ```dart
-/// SearchOverlay<Product>(
+/// SearchPlusOverlay<Product>(
 ///   controller: controller,
 ///   hintText: 'Search products…',
 ///   itemBuilder: (context, result, index) => ListTile(
@@ -22,9 +22,9 @@ import 'states/search_states.dart';
 ///   ),
 /// )
 /// ```
-class SearchOverlay<T> extends StatefulWidget {
+class SearchPlusOverlay<T> extends StatefulWidget {
   /// Creates a search overlay widget.
-  const SearchOverlay({
+  const SearchPlusOverlay({
     super.key,
     required this.controller,
     this.itemBuilder,
@@ -98,10 +98,10 @@ class SearchOverlay<T> extends StatefulWidget {
   final bool closeOnSelect;
 
   @override
-  State<SearchOverlay<T>> createState() => _SearchOverlayState<T>();
+  State<SearchPlusOverlay<T>> createState() => _SearchPlusOverlayState<T>();
 }
 
-class _SearchOverlayState<T> extends State<SearchOverlay<T>>
+class _SearchPlusOverlayState<T> extends State<SearchPlusOverlay<T>>
     with SingleTickerProviderStateMixin {
   final _layerLink = LayerLink();
   final _textController = TextEditingController();
@@ -447,3 +447,7 @@ class _DefaultOverlayItem<T> extends StatelessWidget {
     );
   }
 }
+
+/// Deprecated: Use [SearchPlusOverlay] instead.
+@Deprecated('Use SearchPlusOverlay instead. SearchOverlay was renamed to SearchPlusOverlay.')
+typedef SearchOverlay<T> = SearchPlusOverlay<T>;

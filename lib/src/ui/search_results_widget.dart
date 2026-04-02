@@ -47,16 +47,16 @@ enum SearchResultDensity {
 /// Supports list, grid, and sectioned layouts with multiple display densities.
 ///
 /// ```dart
-/// SearchResultsWidget<Product>(
+/// SearchPlusResults<Product>(
 ///   state: controller.state,
 ///   itemBuilder: (context, result, index) => ListTile(
 ///     title: Text(result.title),
 ///   ),
 /// )
 /// ```
-class SearchResultsWidget<T> extends StatelessWidget {
+class SearchPlusResults<T> extends StatelessWidget {
   /// Creates a search results widget.
-  const SearchResultsWidget({
+  const SearchPlusResults({
     super.key,
     required this.state,
     this.itemBuilder,
@@ -544,3 +544,7 @@ class _DefaultResultItem<T> extends StatelessWidget {
     }
   }
 }
+
+/// Deprecated: Use [SearchPlusResults] instead.
+@Deprecated('Use SearchPlusResults instead. SearchResultsWidget was renamed to SearchPlusResults.')
+typedef SearchResultsWidget<T> = SearchPlusResults<T>;

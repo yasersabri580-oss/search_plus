@@ -144,7 +144,7 @@ class SearchScaffold<T> extends StatefulWidget {
   final bool shrinkWrap;
 
   /// Optional theme override.
-  final SearchThemeData? theme;
+  final SearchPlusThemeData? theme;
 
   /// Optional localizations override.
   final SearchLocalizations? localizations;
@@ -206,7 +206,7 @@ class _SearchScaffoldState<T> extends State<SearchScaffold<T>> {
               Expanded(child: widget.idleBuilder!(context))
             else
               Expanded(
-                child: SearchResultsWidget<T>(
+                child: SearchPlusResults<T>(
                   state: state,
                   itemBuilder: widget.itemBuilder,
                   onItemTap: widget.onItemTap,
