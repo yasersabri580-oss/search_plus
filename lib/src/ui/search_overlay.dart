@@ -43,6 +43,11 @@ class SearchPlusOverlay<T> extends StatefulWidget {
     this.animationConfig = const SearchAnimationConfig(),
     this.addToHistoryOnSubmit = true,
     this.closeOnSelect = true,
+    this.enableBackgroundBlur = false,
+    this.keyboardDismissOnScroll = true,
+    this.emptyBuilder,
+    this.onOverlayVisibilityChanged,
+    this.overlayAnimationDuration = const Duration(milliseconds: 200),
   });
 
   /// The search controller.
@@ -97,6 +102,21 @@ class SearchPlusOverlay<T> extends StatefulWidget {
   /// Whether to close the overlay when a result is selected.
   final bool closeOnSelect;
 
+  /// Whether to show a blurred/dimmed background when the overlay is visible.
+  final bool enableBackgroundBlur;
+
+  /// Whether to dismiss the keyboard when scrolling in the overlay.
+  final bool keyboardDismissOnScroll;
+
+  /// Custom builder for the empty state in the overlay.
+  final Widget Function(BuildContext context, String query)? emptyBuilder;
+
+  /// Called when the overlay visibility changes.
+  final ValueChanged<bool>? onOverlayVisibilityChanged;
+
+  /// Duration of the overlay open/close animation.
+  final Duration overlayAnimationDuration;
+
   @override
   State<SearchPlusOverlay<T>> createState() => _SearchPlusOverlayState<T>();
 }
@@ -118,7 +138,7 @@ class _SearchPlusOverlayState<T> extends State<SearchPlusOverlay<T>>
     widget.controller.addListener(_onControllerChanged);
 
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+      duration: widget.overlayAnimationDuration,
       vsync: this,
     );
     _fadeAnimation = CurvedAnimation(
@@ -178,6 +198,7 @@ class _SearchPlusOverlayState<T> extends State<SearchPlusOverlay<T>>
     Overlay.of(context).insert(_overlayEntry!);
     _isOverlayVisible = true;
     _fadeController.forward();
+    widget.onOverlayVisibilityChanged?.call(true);
   }
 
   void _hideOverlay() {
@@ -185,6 +206,7 @@ class _SearchPlusOverlayState<T> extends State<SearchPlusOverlay<T>>
 
     _fadeController.reverse().then((_) {
       _removeOverlay();
+      widget.onOverlayVisibilityChanged?.call(false);
     });
   }
 
@@ -215,7 +237,7 @@ class _SearchPlusOverlayState<T> extends State<SearchPlusOverlay<T>>
 
     return OverlayEntry(
       builder: (context) {
-        return Positioned(
+        final overlayPanel = Positioned(
           width: size.width,
           child: CompositedTransformFollower(
             link: _layerLink,
@@ -234,10 +256,33 @@ class _SearchPlusOverlayState<T> extends State<SearchPlusOverlay<T>>
                 itemBuilder: widget.itemBuilder,
                 onItemTap: _onItemTapped,
                 onDismiss: _hideOverlay,
+                keyboardDismissOnScroll: widget.keyboardDismissOnScroll,
+                emptyBuilder: widget.emptyBuilder,
               ),
             ),
           ),
         );
+
+        if (widget.enableBackgroundBlur) {
+          return Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: _hideOverlay,
+                  child: FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: Container(
+                      color: Colors.black.withValues(alpha: 0.3),
+                    ),
+                  ),
+                ),
+              ),
+              overlayPanel,
+            ],
+          );
+        }
+
+        return overlayPanel;
       },
     );
   }
@@ -274,6 +319,8 @@ class _OverlayPanel<T> extends StatelessWidget {
     this.itemBuilder,
     this.onItemTap,
     this.onDismiss,
+    this.keyboardDismissOnScroll = true,
+    this.emptyBuilder,
   });
 
   final SearchPlusController<T> controller;
@@ -287,6 +334,8 @@ class _OverlayPanel<T> extends StatelessWidget {
       BuildContext context, SearchResult<T> result, int index)? itemBuilder;
   final void Function(SearchResult<T> result)? onItemTap;
   final VoidCallback? onDismiss;
+  final bool keyboardDismissOnScroll;
+  final Widget Function(BuildContext context, String query)? emptyBuilder;
 
   @override
   Widget build(BuildContext context) {
@@ -346,6 +395,9 @@ class _OverlayPanel<T> extends StatelessWidget {
           ),
         );
       case SearchStatus.empty:
+        if (emptyBuilder != null) {
+          return emptyBuilder!(context, state.query);
+        }
         return Padding(
           padding: const EdgeInsets.all(16),
           child: SearchEmptyState(query: state.query),
@@ -361,6 +413,9 @@ class _OverlayPanel<T> extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 4),
       shrinkWrap: true,
+      keyboardDismissBehavior: keyboardDismissOnScroll
+          ? ScrollViewKeyboardDismissBehavior.onDrag
+          : ScrollViewKeyboardDismissBehavior.manual,
       itemCount: results.length,
       itemBuilder: (context, index) {
         final result = results[index];
