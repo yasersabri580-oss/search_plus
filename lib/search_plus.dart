@@ -9,6 +9,7 @@ export 'src/core/search_controller.dart';
 export 'src/core/search_result.dart';
 export 'src/core/search_state.dart';
 export 'src/core/search_config.dart';
+export 'src/core/search_plus_config.dart';
 export 'src/core/search_history_storage.dart';
 
 // Adapters
@@ -23,6 +24,9 @@ export 'src/ui/search_results_widget.dart';
 export 'src/ui/search_scaffold.dart';
 export 'src/ui/search_overlay.dart';
 export 'src/ui/states/search_states.dart';
+export 'src/ui/suggestion_chips.dart';
+export 'src/ui/search_history_list.dart';
+export 'src/ui/scroll_to_top_button.dart';
 
 // Theme
 export 'src/theme/search_theme.dart';

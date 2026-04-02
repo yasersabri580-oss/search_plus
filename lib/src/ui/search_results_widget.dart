@@ -47,16 +47,16 @@ enum SearchResultDensity {
 /// Supports list, grid, and sectioned layouts with multiple display densities.
 ///
 /// ```dart
-/// SearchResultsWidget<Product>(
+/// SearchPlusResults<Product>(
 ///   state: controller.state,
 ///   itemBuilder: (context, result, index) => ListTile(
 ///     title: Text(result.title),
 ///   ),
 /// )
 /// ```
-class SearchResultsWidget<T> extends StatelessWidget {
+class SearchPlusResults<T> extends StatefulWidget {
   /// Creates a search results widget.
-  const SearchResultsWidget({
+  const SearchPlusResults({
     super.key,
     required this.state,
     this.itemBuilder,
@@ -77,6 +77,9 @@ class SearchResultsWidget<T> extends StatelessWidget {
     this.physics,
     this.padding,
     this.shrinkWrap = false,
+    this.emptyBuilder,
+    this.onLoadMore,
+    this.loadMoreThreshold = 200.0,
   });
 
   /// Current search state.
@@ -139,24 +142,41 @@ class SearchResultsWidget<T> extends StatelessWidget {
   /// Whether to shrink wrap the list.
   final bool shrinkWrap;
 
+  /// Custom builder for the empty state. If provided, this is used instead
+  /// of [emptyState] widget or the default [SearchEmptyState].
+  /// Receives the current build context and the search query.
+  final Widget Function(BuildContext context, String query)? emptyBuilder;
+
+  /// Called when the user scrolls near the end of results.
+  /// Use this to trigger loading more results (pagination).
+  final VoidCallback? onLoadMore;
+
+  /// Distance from the bottom (in pixels) at which [onLoadMore] triggers.
+  final double loadMoreThreshold;
+
+  @override
+  State<SearchPlusResults<T>> createState() => _SearchPlusResultsState<T>();
+}
+
+class _SearchPlusResultsState<T> extends State<SearchPlusResults<T>> {
   @override
   Widget build(BuildContext context) {
-    _debug('build called, status=${state.status}, resultsCount=${state.results.length}, layout=$layout, density=$density');
+    _debug('build called, status=${widget.state.status}, resultsCount=${widget.state.results.length}, layout=${widget.layout}, density=${widget.density}');
     return Column(
       children: [
-        if (headerBuilder != null)
+        if (widget.headerBuilder != null)
           Builder(
             builder: (context) {
               _debug('building header');
-              return headerBuilder!(context, state);
+              return widget.headerBuilder!(context, widget.state);
             },
           ),
         Expanded(child: _buildContent(context)),
-        if (footerBuilder != null)
+        if (widget.footerBuilder != null)
           Builder(
             builder: (context) {
               _debug('building footer');
-              return footerBuilder!(context, state);
+              return widget.footerBuilder!(context, widget.state);
             },
           ),
       ],
@@ -164,59 +184,81 @@ class SearchResultsWidget<T> extends StatelessWidget {
   }
 
   Widget _buildContent(BuildContext context) {
-    _debug('_buildContent, status=${state.status}');
-    switch (state.status) {
+    _debug('_buildContent, status=${widget.state.status}');
+    switch (widget.state.status) {
       case SearchStatus.idle:
         _debug('idle state -> empty SizedBox');
         return const SizedBox.shrink();
       case SearchStatus.loading:
-        _debug('loading state -> ${loadingWidget != null ? "custom loading" : (showShimmer ? "shimmer" : "default loading")}');
-        return loadingWidget ??
-            (showShimmer
+        _debug('loading state -> ${widget.loadingWidget != null ? "custom loading" : (widget.showShimmer ? "shimmer" : "default loading")}');
+        return widget.loadingWidget ??
+            (widget.showShimmer
                 ? const ShimmerLoading()
                 : const SearchLoadingState());
       case SearchStatus.error:
-        _debug('error state -> ${errorState != null ? "custom error" : "default error"}, message=${state.error}');
-        return errorState ??
+        _debug('error state -> ${widget.errorState != null ? "custom error" : "default error"}, message=${widget.state.error}');
+        return widget.errorState ??
             SearchErrorState(
-              message: state.error,
-              onRetry: onRetry,
+              message: widget.state.error,
+              onRetry: widget.onRetry,
             );
       case SearchStatus.empty:
-        _debug('empty state -> ${emptyState != null ? "custom empty" : "default empty"}, query=${state.query}');
-        return emptyState ??
-            SearchEmptyState(query: state.query);
+        _debug('empty state -> ${widget.emptyBuilder != null ? "custom emptyBuilder" : (widget.emptyState != null ? "custom empty" : "default empty")}, query=${widget.state.query}');
+        if (widget.emptyBuilder != null) {
+          return widget.emptyBuilder!(context, widget.state.query);
+        }
+        return widget.emptyState ??
+            SearchEmptyState(query: widget.state.query);
       case SearchStatus.success:
         _debug('success state -> building results');
         return _buildResults(context);
     }
   }
 
+  Widget _wrapWithLoadMoreDetection(Widget scrollableChild) {
+    if (widget.onLoadMore == null) return scrollableChild;
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification is ScrollUpdateNotification &&
+            widget.state.hasMoreResults) {
+          final maxScroll = notification.metrics.maxScrollExtent;
+          final currentScroll = notification.metrics.pixels;
+          if (maxScroll - currentScroll <= widget.loadMoreThreshold) {
+            widget.onLoadMore!();
+          }
+        }
+        return false;
+      },
+      child: scrollableChild,
+    );
+  }
+
   Widget _buildResults(BuildContext context) {
-    _debug('_buildResults, layout=$layout, resultsCount=${state.results.length}, sectionsCount=${state.sections.length}');
-    switch (layout) {
+    _debug('_buildResults, layout=${widget.layout}, resultsCount=${widget.state.results.length}, sectionsCount=${widget.state.sections.length}');
+    switch (widget.layout) {
       case SearchResultsLayout.list:
-        return _buildListResults(context);
+        return _wrapWithLoadMoreDetection(_buildListResults(context));
       case SearchResultsLayout.grid:
-        return _buildGridResults(context);
+        return _wrapWithLoadMoreDetection(_buildGridResults(context));
       case SearchResultsLayout.sectioned:
-        return _buildSectionedResults(context);
+        return _wrapWithLoadMoreDetection(_buildSectionedResults(context));
     }
   }
 
   Widget _buildListResults(BuildContext context) {
-    final results = state.results;
-    _debug('_buildListResults, count=${results.length}, hasSeparator=${separatorBuilder != null}, shrinkWrap=$shrinkWrap');
+    final results = widget.state.results;
+    _debug('_buildListResults, count=${results.length}, hasSeparator=${widget.separatorBuilder != null}, shrinkWrap=${widget.shrinkWrap}');
 
-    if (separatorBuilder != null) {
+    if (widget.separatorBuilder != null) {
       return ListView.separated(
-        padding: padding ?? const EdgeInsets.symmetric(vertical: 8),
-        physics: physics,
-        shrinkWrap: shrinkWrap,
+        padding: widget.padding ?? const EdgeInsets.symmetric(vertical: 8),
+        physics: widget.physics,
+        shrinkWrap: widget.shrinkWrap,
         itemCount: results.length,
         separatorBuilder: (context, index) {
           _debug('separatorBuilder for index $index');
-          return separatorBuilder!(context, index);
+          return widget.separatorBuilder!(context, index);
         },
         itemBuilder: (context, index) {
           _debug('building list item index $index');
@@ -230,9 +272,9 @@ class SearchResultsWidget<T> extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: padding ?? const EdgeInsets.symmetric(vertical: 8),
-      physics: physics,
-      shrinkWrap: shrinkWrap,
+      padding: widget.padding ?? const EdgeInsets.symmetric(vertical: 8),
+      physics: widget.physics,
+      shrinkWrap: widget.shrinkWrap,
       itemCount: results.length,
       itemBuilder: (context, index) {
         _debug('building list item index $index');
@@ -246,16 +288,16 @@ class SearchResultsWidget<T> extends StatelessWidget {
   }
 
   Widget _buildGridResults(BuildContext context) {
-    final results = state.results;
-    _debug('_buildGridResults, count=${results.length}, crossAxisCount=$gridCrossAxisCount, aspectRatio=$gridChildAspectRatio');
+    final results = widget.state.results;
+    _debug('_buildGridResults, count=${results.length}, crossAxisCount=${widget.gridCrossAxisCount}, aspectRatio=${widget.gridChildAspectRatio}');
 
     return GridView.builder(
-      padding: padding ?? const EdgeInsets.all(16),
-      physics: physics,
-      shrinkWrap: shrinkWrap,
+      padding: widget.padding ?? const EdgeInsets.all(16),
+      physics: widget.physics,
+      shrinkWrap: widget.shrinkWrap,
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: gridCrossAxisCount,
-        childAspectRatio: gridChildAspectRatio,
+        crossAxisCount: widget.gridCrossAxisCount,
+        childAspectRatio: widget.gridChildAspectRatio,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
@@ -272,25 +314,25 @@ class SearchResultsWidget<T> extends StatelessWidget {
   }
 
   Widget _buildSectionedResults(BuildContext context) {
-    if (state.sections.isEmpty) {
+    if (widget.state.sections.isEmpty) {
       _debug('_buildSectionedResults: sections empty, falling back to list layout');
       return _buildListResults(context);
     }
-    _debug('_buildSectionedResults: ${state.sections.length} sections');
+    _debug('_buildSectionedResults: ${widget.state.sections.length} sections');
     return ListView.builder(
-      padding: padding ?? const EdgeInsets.symmetric(vertical: 8),
-      physics: physics,
-      shrinkWrap: shrinkWrap,
-      itemCount: state.sections.length,
+      padding: widget.padding ?? const EdgeInsets.symmetric(vertical: 8),
+      physics: widget.physics,
+      shrinkWrap: widget.shrinkWrap,
+      itemCount: widget.state.sections.length,
       itemBuilder: (context, sectionIndex) {
-        final section = state.sections[sectionIndex];
+        final section = widget.state.sections[sectionIndex];
         _debug('building section index $sectionIndex, title="${section.title}", resultsCount=${section.results.length}, expanded=${section.isExpanded}');
         return _SearchSection<T>(
           section: section,
-          itemBuilder: itemBuilder,
-          onItemTap: onItemTap,
-          density: density,
-          animationConfig: animationConfig,
+          itemBuilder: widget.itemBuilder,
+          onItemTap: widget.onItemTap,
+          density: widget.density,
+          animationConfig: widget.animationConfig,
         );
       },
     );
@@ -302,17 +344,17 @@ class SearchResultsWidget<T> extends StatelessWidget {
     int index,
   ) {
     _debug('_buildAnimatedItem index $index, title="${result.title}", hasImage=${result.imageUrl != null}');
-    final child = itemBuilder?.call(context, result, index) ??
+    final child = widget.itemBuilder?.call(context, result, index) ??
         _DefaultResultItem<T>(
           result: result,
-          density: density,
-          query: state.query,
-          onTap: onItemTap != null ? () => onItemTap!(result) : null,
+          density: widget.density,
+          query: widget.state.query,
+          onTap: widget.onItemTap != null ? () => widget.onItemTap!(result) : null,
         );
 
     return AnimatedSearchItem(
       index: index,
-      config: animationConfig,
+      config: widget.animationConfig,
       child: child,
     );
   }
@@ -544,3 +586,7 @@ class _DefaultResultItem<T> extends StatelessWidget {
     }
   }
 }
+
+/// Deprecated: Use [SearchPlusResults] instead.
+@Deprecated('Use SearchPlusResults instead. SearchResultsWidget was renamed to SearchPlusResults.')
+typedef SearchResultsWidget<T> = SearchPlusResults<T>;

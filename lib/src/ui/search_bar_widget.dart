@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../l10n/search_localizations.dart';
@@ -32,6 +34,11 @@ class SearchPlusBar extends StatefulWidget {
     this.onVoiceSearch,
     this.textInputAction = TextInputAction.search,
     this.textCapitalization = TextCapitalization.none,
+    this.onFilterPressed,
+    this.showDebounceIndicator = false,
+    this.borderRadius,
+    this.elevation,
+    this.backgroundColor,
   });
 
   /// Called when the search text changes.
@@ -76,9 +83,27 @@ class SearchPlusBar extends StatefulWidget {
   /// Text capitalization.
   final TextCapitalization textCapitalization;
 
+  /// Callback for the filter button. If null, filter button is hidden.
+  final VoidCallback? onFilterPressed;
+
+  /// Whether to show a debounce progress indicator below the search bar.
+  final bool showDebounceIndicator;
+
+  /// Custom border radius. If null, uses the theme's default.
+  final BorderRadius? borderRadius;
+
+  /// Custom elevation. If null, uses the theme's default.
+  final double? elevation;
+
+  /// Custom background color. If null, uses the theme's default.
+  final Color? backgroundColor;
+
   @override
   State<SearchPlusBar> createState() => _SearchPlusBarState();
 }
+
+/// Default duration for the debounce indicator timer.
+const Duration _kDebounceIndicatorDuration = Duration(milliseconds: 350);
 
 class _SearchPlusBarState extends State<SearchPlusBar>
     with SingleTickerProviderStateMixin {
@@ -88,6 +113,8 @@ class _SearchPlusBarState extends State<SearchPlusBar>
   late Animation<double> _elevationAnimation;
   bool _isFocused = false;
   bool _hasText = false;
+  bool _isDebouncing = false;
+  Timer? _debounceIndicatorTimer;
 
   @override
   void initState() {
@@ -129,6 +156,21 @@ class _SearchPlusBarState extends State<SearchPlusBar>
         _hasText = hasText;
       });
     }
+    if (widget.showDebounceIndicator) {
+      _debounceIndicatorTimer?.cancel();
+      if (!_isDebouncing) {
+        setState(() {
+          _isDebouncing = true;
+        });
+      }
+      _debounceIndicatorTimer = Timer(_kDebounceIndicatorDuration, () {
+        if (mounted) {
+          setState(() {
+            _isDebouncing = false;
+          });
+        }
+      });
+    }
   }
 
   void _clear() {
@@ -139,6 +181,7 @@ class _SearchPlusBarState extends State<SearchPlusBar>
 
   @override
   void dispose() {
+    _debounceIndicatorTimer?.cancel();
     _focusNode.removeListener(_onFocusChanged);
     _controller.removeListener(_onTextChanged);
     if (widget.controller == null) _controller.dispose();
@@ -152,96 +195,130 @@ class _SearchPlusBarState extends State<SearchPlusBar>
     final searchTheme = SearchTheme.of(context);
     final barTheme = searchTheme.searchBarTheme;
     final l10n = SearchLocalizationsProvider.of(context);
+    final effectiveBorderRadius =
+        widget.borderRadius ?? barTheme.borderRadius!;
 
     return AnimatedBuilder(
       animation: _elevationAnimation,
       builder: (context, child) {
-        final elevation = barTheme.elevation! +
+        final baseElevation = widget.elevation ?? barTheme.elevation!;
+        final elevation = baseElevation +
             (_elevationAnimation.value *
-                (barTheme.focusedElevation! - barTheme.elevation!));
+                (barTheme.focusedElevation! - baseElevation));
 
-        return Material(
-          elevation: elevation,
-          shadowColor: barTheme.shadowColor,
-          borderRadius: barTheme.borderRadius,
-          color: _isFocused
-              ? barTheme.focusedBackgroundColor
-              : barTheme.backgroundColor,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeOutCubic,
-            height: barTheme.height,
-            decoration: BoxDecoration(
-              borderRadius: barTheme.borderRadius,
-              border: Border.all(
-                color: _isFocused
-                    ? barTheme.focusedBorderColor!
-                    : barTheme.borderColor!,
-                width: barTheme.borderWidth!,
+        final effectiveBackgroundColor = _isFocused
+            ? barTheme.focusedBackgroundColor
+            : (widget.backgroundColor ?? barTheme.backgroundColor);
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Material(
+              elevation: elevation,
+              shadowColor: barTheme.shadowColor,
+              borderRadius: effectiveBorderRadius,
+              color: effectiveBackgroundColor,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                curve: Curves.easeOutCubic,
+                height: barTheme.height,
+                decoration: BoxDecoration(
+                  borderRadius: effectiveBorderRadius,
+                  border: Border.all(
+                    color: _isFocused
+                        ? barTheme.focusedBorderColor!
+                        : barTheme.borderColor!,
+                    width: barTheme.borderWidth!,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16),
+                      child: widget.leading ??
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 200),
+                            child: Icon(
+                              Icons.search_rounded,
+                              key: ValueKey(_isFocused),
+                              color: _isFocused
+                                  ? barTheme.focusedBorderColor
+                                  : barTheme.iconColor,
+                            ),
+                          ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        autofocus: widget.autofocus,
+                        enabled: widget.enabled,
+                        textInputAction: widget.textInputAction,
+                        textCapitalization: widget.textCapitalization,
+                        style: barTheme.textStyle,
+                        cursorColor: barTheme.cursorColor,
+                        decoration: InputDecoration(
+                          hintText: widget.hintText ?? l10n.hintText,
+                          hintStyle: barTheme.hintStyle,
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                          isDense: true,
+                        ),
+                        onChanged: widget.onChanged,
+                        onSubmitted: widget.onSubmitted,
+                      ),
+                    ),
+                    if (_hasText && widget.showClearButton)
+                      _buildIconButton(
+                        icon: Icons.close_rounded,
+                        tooltip: l10n.clearSearchTooltip,
+                        onPressed: _clear,
+                        color: barTheme.iconColor,
+                      ),
+                    if (widget.onVoiceSearch != null && !_hasText)
+                      _buildIconButton(
+                        icon: Icons.mic_rounded,
+                        tooltip: l10n.voiceSearchTooltip,
+                        onPressed: widget.onVoiceSearch!,
+                        color: barTheme.iconColor,
+                      ),
+                    if (widget.onFilterPressed != null)
+                      _buildIconButton(
+                        icon: Icons.tune_rounded,
+                        tooltip: 'Filter',
+                        onPressed: widget.onFilterPressed!,
+                        color: barTheme.iconColor,
+                      ),
+                    if (widget.trailing != null)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: widget.trailing!,
+                      )
+                    else
+                      const SizedBox(width: 16),
+                  ],
+                ),
               ),
             ),
-            child: Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: widget.leading ??
-                      AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 200),
-                        child: Icon(
-                          Icons.search_rounded,
-                          key: ValueKey(_isFocused),
-                          color: _isFocused
-                              ? barTheme.focusedBorderColor
-                              : barTheme.iconColor,
-                        ),
-                      ),
+            if (widget.showDebounceIndicator && _isDebouncing)
+              ClipRRect(
+                borderRadius: BorderRadius.only(
+                  bottomLeft:
+                      Radius.circular(effectiveBorderRadius.bottomLeft.x),
+                  bottomRight:
+                      Radius.circular(effectiveBorderRadius.bottomRight.x),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    focusNode: _focusNode,
-                    autofocus: widget.autofocus,
-                    enabled: widget.enabled,
-                    textInputAction: widget.textInputAction,
-                    textCapitalization: widget.textCapitalization,
-                    style: barTheme.textStyle,
-                    cursorColor: barTheme.cursorColor,
-                    decoration: InputDecoration(
-                      hintText: widget.hintText ?? l10n.hintText,
-                      hintStyle: barTheme.hintStyle,
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
-                      isDense: true,
-                    ),
-                    onChanged: widget.onChanged,
-                    onSubmitted: widget.onSubmitted,
+                child: LinearProgressIndicator(
+                  minHeight: 2,
+                  backgroundColor: Colors.transparent,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    barTheme.cursorColor ??
+                        Theme.of(context).colorScheme.primary,
                   ),
                 ),
-                if (_hasText && widget.showClearButton)
-                  _buildIconButton(
-                    icon: Icons.close_rounded,
-                    tooltip: l10n.clearSearchTooltip,
-                    onPressed: _clear,
-                    color: barTheme.iconColor,
-                  ),
-                if (widget.onVoiceSearch != null && !_hasText)
-                  _buildIconButton(
-                    icon: Icons.mic_rounded,
-                    tooltip: l10n.voiceSearchTooltip,
-                    onPressed: widget.onVoiceSearch!,
-                    color: barTheme.iconColor,
-                  ),
-                if (widget.trailing != null)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: widget.trailing!,
-                  )
-                else
-                  const SizedBox(width: 16),
-              ],
-            ),
-          ),
+              ),
+          ],
         );
       },
     );

@@ -5,11 +5,12 @@ import 'package:flutter/material.dart';
 /// Provides comprehensive theming that integrates with Flutter's [ThemeData].
 ///
 /// Use [SearchTheme] inherited widget to apply themes to descendants.
-class SearchThemeData {
+class SearchPlusThemeData {
   /// Creates search theme data.
-  const SearchThemeData({
+  const SearchPlusThemeData({
     this.searchBarTheme = const SearchBarThemeData(),
     this.resultTheme = const SearchResultThemeData(),
+    this.overlayTheme = const SearchOverlayThemeData(),
     this.animationDuration = const Duration(milliseconds: 300),
     this.animationCurve = Curves.easeInOut,
   });
@@ -20,6 +21,9 @@ class SearchThemeData {
   /// Theme for search results.
   final SearchResultThemeData resultTheme;
 
+  /// Theme for search overlays.
+  final SearchOverlayThemeData overlayTheme;
+
   /// Default animation duration.
   final Duration animationDuration;
 
@@ -27,28 +31,31 @@ class SearchThemeData {
   final Curve animationCurve;
 
   /// Creates a copy with the given fields replaced.
-  SearchThemeData copyWith({
+  SearchPlusThemeData copyWith({
     SearchBarThemeData? searchBarTheme,
     SearchResultThemeData? resultTheme,
+    SearchOverlayThemeData? overlayTheme,
     Duration? animationDuration,
     Curve? animationCurve,
   }) {
-    return SearchThemeData(
+    return SearchPlusThemeData(
       searchBarTheme: searchBarTheme ?? this.searchBarTheme,
       resultTheme: resultTheme ?? this.resultTheme,
+      overlayTheme: overlayTheme ?? this.overlayTheme,
       animationDuration: animationDuration ?? this.animationDuration,
       animationCurve: animationCurve ?? this.animationCurve,
     );
   }
 
   /// Resolves defaults from the [BuildContext]'s theme.
-  SearchThemeData resolve(BuildContext context) {
+  SearchPlusThemeData resolve(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return SearchThemeData(
+    return SearchPlusThemeData(
       searchBarTheme: searchBarTheme.resolve(context, colorScheme),
       resultTheme: resultTheme.resolve(context, colorScheme),
+      overlayTheme: overlayTheme.resolve(context, colorScheme),
       animationDuration: animationDuration,
       animationCurve: animationCurve,
     );
@@ -203,7 +210,50 @@ class SearchResultThemeData {
   }
 }
 
-/// An inherited widget that provides [SearchThemeData] to descendants.
+/// Theme data for search overlay panels.
+class SearchOverlayThemeData {
+  /// Creates search overlay theme data.
+  const SearchOverlayThemeData({
+    this.backgroundColor,
+    this.borderRadius,
+    this.elevation,
+    this.shadowColor,
+    this.maxHeight,
+    this.backdropColor,
+  });
+
+  /// Background color of the overlay panel.
+  final Color? backgroundColor;
+
+  /// Border radius of the overlay panel.
+  final BorderRadius? borderRadius;
+
+  /// Elevation of the overlay panel.
+  final double? elevation;
+
+  /// Shadow color of the overlay panel.
+  final Color? shadowColor;
+
+  /// Maximum height of the overlay panel.
+  final double? maxHeight;
+
+  /// Background color when backdrop blur is enabled.
+  final Color? backdropColor;
+
+  /// Resolves defaults from the color scheme.
+  SearchOverlayThemeData resolve(BuildContext context, ColorScheme colorScheme) {
+    return SearchOverlayThemeData(
+      backgroundColor: backgroundColor ?? colorScheme.surfaceContainer,
+      borderRadius: borderRadius ?? BorderRadius.circular(16),
+      elevation: elevation ?? 8,
+      shadowColor: shadowColor ?? colorScheme.shadow.withValues(alpha: 0.2),
+      maxHeight: maxHeight ?? 400,
+      backdropColor: backdropColor ?? Colors.black.withValues(alpha: 0.3),
+    );
+  }
+}
+
+/// An inherited widget that provides [SearchPlusThemeData] to descendants.
 class SearchTheme extends InheritedWidget {
   /// Creates a search theme.
   const SearchTheme({
@@ -213,17 +263,21 @@ class SearchTheme extends InheritedWidget {
   });
 
   /// The theme data.
-  final SearchThemeData data;
+  final SearchPlusThemeData data;
 
-  /// Retrieves the nearest [SearchThemeData] or returns defaults.
-  static SearchThemeData of(BuildContext context) {
+  /// Retrieves the nearest [SearchPlusThemeData] or returns defaults.
+  static SearchPlusThemeData of(BuildContext context) {
     final widget = context.dependOnInheritedWidgetOfExactType<SearchTheme>();
     if (widget != null) {
       return widget.data.resolve(context);
     }
-    return const SearchThemeData().resolve(context);
+    return const SearchPlusThemeData().resolve(context);
   }
 
   @override
   bool updateShouldNotify(SearchTheme oldWidget) => data != oldWidget.data;
 }
+
+/// Deprecated: Use [SearchPlusThemeData] instead.
+@Deprecated('Use SearchPlusThemeData instead. SearchThemeData was renamed to SearchPlusThemeData.')
+typedef SearchThemeData = SearchPlusThemeData;

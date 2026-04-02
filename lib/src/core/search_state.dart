@@ -13,6 +13,9 @@ class SearchState<T> {
     this.error,
     this.suggestions = const [],
     this.history = const [],
+    this.hasMoreResults = false,
+    this.currentPage = 0,
+    this.totalResults,
   });
 
   /// The current search query.
@@ -36,6 +39,15 @@ class SearchState<T> {
   /// Recent search history.
   final List<String> history;
 
+  /// Whether more results are available for pagination.
+  final bool hasMoreResults;
+
+  /// The current page index (0-based).
+  final int currentPage;
+
+  /// Total number of results available (if known from the adapter).
+  final int? totalResults;
+
   /// Whether the search is currently loading.
   bool get isLoading => status == SearchStatus.loading;
 
@@ -57,6 +69,9 @@ class SearchState<T> {
     String? error,
     List<String>? suggestions,
     List<String>? history,
+    bool? hasMoreResults,
+    int? currentPage,
+    int? totalResults,
   }) {
     return SearchState<T>(
       query: query ?? this.query,
@@ -66,6 +81,9 @@ class SearchState<T> {
       error: error,
       suggestions: suggestions ?? this.suggestions,
       history: history ?? this.history,
+      hasMoreResults: hasMoreResults ?? this.hasMoreResults,
+      currentPage: currentPage ?? this.currentPage,
+      totalResults: totalResults ?? this.totalResults,
     );
   }
 
@@ -76,10 +94,13 @@ class SearchState<T> {
           runtimeType == other.runtimeType &&
           query == other.query &&
           status == other.status &&
+          hasMoreResults == other.hasMoreResults &&
+          currentPage == other.currentPage &&
           listEquals(results, other.results);
 
   @override
-  int get hashCode => Object.hash(query, status, results.length);
+  int get hashCode =>
+      Object.hash(query, status, results.length, hasMoreResults, currentPage);
 }
 
 /// Status of a search operation.
