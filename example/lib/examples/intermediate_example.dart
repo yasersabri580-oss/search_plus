@@ -85,7 +85,8 @@ class _IntermediateExampleState extends State<IntermediateExample> {
               ),
               title: HighlightText(
                 text: result.title,
-                query: _controller.query,
+                matchedText: _controller.query,
+              
                 highlightStyle: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: colorScheme.primary,

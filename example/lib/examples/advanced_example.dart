@@ -251,6 +251,7 @@ class _UserTile extends StatelessWidget {
         children: [
           Flexible(
             child: HighlightText(
+              matchedText: query,
               text: result.title,
               query: query,
               highlightStyle: TextStyle(
