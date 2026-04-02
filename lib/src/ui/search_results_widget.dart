@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../animations/animation_presets.dart';
@@ -5,6 +6,17 @@ import '../core/search_result.dart';
 import '../core/search_state.dart';
 import '../theme/search_theme.dart';
 import 'states/search_states.dart';
+
+// Debug helper
+void _debug(String message, [Object? value]) {
+  if (kDebugMode) {
+    if (value != null) {
+      debugPrint('🔍 SearchResultsWidget: $message: $value');
+    } else {
+      debugPrint('🔍 SearchResultsWidget: $message');
+    }
+  }
+}
 
 /// Display mode for search results.
 enum SearchResultsLayout {
@@ -129,39 +141,59 @@ class SearchResultsWidget<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    _debug('build called, status=${state.status}, resultsCount=${state.results.length}, layout=$layout, density=$density');
     return Column(
       children: [
-        if (headerBuilder != null) headerBuilder!(context, state),
+        if (headerBuilder != null)
+          Builder(
+            builder: (context) {
+              _debug('building header');
+              return headerBuilder!(context, state);
+            },
+          ),
         Expanded(child: _buildContent(context)),
-        if (footerBuilder != null) footerBuilder!(context, state),
+        if (footerBuilder != null)
+          Builder(
+            builder: (context) {
+              _debug('building footer');
+              return footerBuilder!(context, state);
+            },
+          ),
       ],
     );
   }
 
   Widget _buildContent(BuildContext context) {
+    _debug('_buildContent, status=${state.status}');
     switch (state.status) {
       case SearchStatus.idle:
+        _debug('idle state -> empty SizedBox');
         return const SizedBox.shrink();
       case SearchStatus.loading:
+        _debug('loading state -> ${loadingWidget != null ? "custom loading" : (showShimmer ? "shimmer" : "default loading")}');
         return loadingWidget ??
             (showShimmer
                 ? const ShimmerLoading()
                 : const SearchLoadingState());
       case SearchStatus.error:
+        _debug('error state -> ${errorState != null ? "custom error" : "default error"}, message=${state.error}');
         return errorState ??
             SearchErrorState(
               message: state.error,
               onRetry: onRetry,
             );
       case SearchStatus.empty:
+        _debug('empty state -> ${emptyState != null ? "custom empty" : "default empty"}, query=${state.query}');
         return emptyState ??
             SearchEmptyState(query: state.query);
       case SearchStatus.success:
+        _debug('success state -> building results');
         return _buildResults(context);
     }
   }
 
   Widget _buildResults(BuildContext context) {
+    _debug('_buildResults, layout=$layout, resultsCount=${state.results.length}, sectionsCount=${state.sections.length}');
     switch (layout) {
       case SearchResultsLayout.list:
         return _buildListResults(context);
@@ -174,6 +206,7 @@ class SearchResultsWidget<T> extends StatelessWidget {
 
   Widget _buildListResults(BuildContext context) {
     final results = state.results;
+    _debug('_buildListResults, count=${results.length}, hasSeparator=${separatorBuilder != null}, shrinkWrap=$shrinkWrap');
 
     if (separatorBuilder != null) {
       return ListView.separated(
@@ -181,12 +214,18 @@ class SearchResultsWidget<T> extends StatelessWidget {
         physics: physics,
         shrinkWrap: shrinkWrap,
         itemCount: results.length,
-        separatorBuilder: separatorBuilder!,
-        itemBuilder: (context, index) => _buildAnimatedItem(
-          context,
-          results[index],
-          index,
-        ),
+        separatorBuilder: (context, index) {
+          _debug('separatorBuilder for index $index');
+          return separatorBuilder!(context, index);
+        },
+        itemBuilder: (context, index) {
+          _debug('building list item index $index');
+          return _buildAnimatedItem(
+            context,
+            results[index],
+            index,
+          );
+        },
       );
     }
 
@@ -195,16 +234,20 @@ class SearchResultsWidget<T> extends StatelessWidget {
       physics: physics,
       shrinkWrap: shrinkWrap,
       itemCount: results.length,
-      itemBuilder: (context, index) => _buildAnimatedItem(
-        context,
-        results[index],
-        index,
-      ),
+      itemBuilder: (context, index) {
+        _debug('building list item index $index');
+        return _buildAnimatedItem(
+          context,
+          results[index],
+          index,
+        );
+      },
     );
   }
 
   Widget _buildGridResults(BuildContext context) {
     final results = state.results;
+    _debug('_buildGridResults, count=${results.length}, crossAxisCount=$gridCrossAxisCount, aspectRatio=$gridChildAspectRatio');
 
     return GridView.builder(
       padding: padding ?? const EdgeInsets.all(16),
@@ -217,19 +260,23 @@ class SearchResultsWidget<T> extends StatelessWidget {
         mainAxisSpacing: 12,
       ),
       itemCount: results.length,
-      itemBuilder: (context, index) => _buildAnimatedItem(
-        context,
-        results[index],
-        index,
-      ),
+      itemBuilder: (context, index) {
+        _debug('building grid item index $index');
+        return _buildAnimatedItem(
+          context,
+          results[index],
+          index,
+        );
+      },
     );
   }
 
   Widget _buildSectionedResults(BuildContext context) {
     if (state.sections.isEmpty) {
+      _debug('_buildSectionedResults: sections empty, falling back to list layout');
       return _buildListResults(context);
     }
-
+    _debug('_buildSectionedResults: ${state.sections.length} sections');
     return ListView.builder(
       padding: padding ?? const EdgeInsets.symmetric(vertical: 8),
       physics: physics,
@@ -237,6 +284,7 @@ class SearchResultsWidget<T> extends StatelessWidget {
       itemCount: state.sections.length,
       itemBuilder: (context, sectionIndex) {
         final section = state.sections[sectionIndex];
+        _debug('building section index $sectionIndex, title="${section.title}", resultsCount=${section.results.length}, expanded=${section.isExpanded}');
         return _SearchSection<T>(
           section: section,
           itemBuilder: itemBuilder,
@@ -253,6 +301,7 @@ class SearchResultsWidget<T> extends StatelessWidget {
     SearchResult<T> result,
     int index,
   ) {
+    _debug('_buildAnimatedItem index $index, title="${result.title}", hasImage=${result.imageUrl != null}');
     final child = itemBuilder?.call(context, result, index) ??
         _DefaultResultItem<T>(
           result: result,
@@ -296,6 +345,7 @@ class _SearchSectionState<T> extends State<_SearchSection<T>> {
   void initState() {
     super.initState();
     _isExpanded = widget.section.isExpanded;
+    _debug('_SearchSectionState initState, title="${widget.section.title}", initialExpanded=$_isExpanded');
   }
 
   @override
@@ -303,11 +353,16 @@ class _SearchSectionState<T> extends State<_SearchSection<T>> {
     final searchTheme = SearchTheme.of(context);
     final resultTheme = searchTheme.resultTheme;
 
+    _debug('_SearchSectionState build, title="${widget.section.title}", expanded=$_isExpanded, resultsCount=${widget.section.results.length}');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
-          onTap: () => setState(() => _isExpanded = !_isExpanded),
+          onTap: () {
+            _debug('section header tapped, toggling expansion');
+            setState(() => _isExpanded = !_isExpanded);
+          },
           child: Container(
             padding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -385,6 +440,8 @@ class _DefaultResultItem<T> extends StatelessWidget {
   Widget build(BuildContext context) {
     final searchTheme = SearchTheme.of(context);
     final resultTheme = searchTheme.resultTheme;
+
+    _debug('_DefaultResultItem build, density=$density, title="${result.title}", query="$query"');
 
     switch (density) {
       case SearchResultDensity.compact:

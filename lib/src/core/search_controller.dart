@@ -17,7 +17,13 @@ class SearchEngine<T> {
     this.debounceDuration = const Duration(milliseconds: 300),
     this.minQueryLength = 1,
     this.maxResults = 50,
-  });
+  }) {
+    // DEBUG: Log engine creation
+    SearchLogger.debug(
+      '[SearchEngine] Created with adapter=${adapter.runtimeType}, '
+      'debounceDuration=$debounceDuration, minQueryLength=$minQueryLength, maxResults=$maxResults',
+    );
+  }
 
   /// The search adapter to use.
   final SearchAdapter<T> adapter;
@@ -39,12 +45,14 @@ class SearchEngine<T> {
   /// Uses a synchronous controller so that listeners are notified immediately
   /// when state changes, ensuring that awaiting [searchImmediate] or calling
   /// [clear] reflects the updated state without a microtask delay.
-  final _stateController = StreamController<SearchState<T>>.broadcast(sync: true);
+  final _stateController = StreamController<SearchState<T>>.broadcast(
+    sync: true,
+  );
 
   /// Stream of search state changes.
   Stream<SearchState<T>> get stateStream => _stateController.stream;
 
-  SearchState<T> _currentState = const SearchState();
+  SearchState<T> _currentState = SearchState();
 
   /// The current search state.
   SearchState<T> get currentState => _currentState;
@@ -53,108 +61,201 @@ class SearchEngine<T> {
   ///
   /// Cancels any pending search. Only the latest query's results are emitted.
   void search(String query) {
+    // DEBUG: Entry
+    SearchLogger.debug('[SearchEngine.search] Called with query="$query"');
     _debounceTimer?.cancel();
+    if (_debounceTimer?.isActive == true) {
+      SearchLogger.debug(
+        '[SearchEngine.search] Cancelled previous debounce timer',
+      );
+    }
     SearchLogger.searchQuery(query);
 
     if (query.length < minQueryLength) {
-      _emit(_currentState.copyWith(
-        query: query,
-        results: const [],
-        sections: const [],
-        status: query.isEmpty ? SearchStatus.idle : SearchStatus.empty,
-      ));
+      SearchLogger.debug(
+        '[SearchEngine.search] Query too short (${query.length} < $minQueryLength) -> idle/empty',
+      );
+      _emit(
+        _currentState.copyWith(
+          query: query,
+          results: const [],
+          sections: const [],
+          status: query.isEmpty ? SearchStatus.idle : SearchStatus.empty,
+        ),
+      );
       return;
     }
 
-    _emit(_currentState.copyWith(
-      query: query,
-      status: SearchStatus.loading,
-    ));
+    SearchLogger.debug(
+      '[SearchEngine.search] Starting debounce timer for ${debounceDuration.inMilliseconds}ms',
+    );
+    _emit(_currentState.copyWith(query: query, status: SearchStatus.loading));
 
     _debounceTimer = Timer(debounceDuration, () {
+      SearchLogger.debug(
+        '[SearchEngine.search] Debounce timer elapsed, executing search for "$query"',
+      );
       _executeSearch(query);
     });
   }
 
   /// Performs an immediate search without debouncing.
   Future<void> searchImmediate(String query) async {
+    // DEBUG: Entry
+    SearchLogger.debug(
+      '[SearchEngine.searchImmediate] Called with query="$query"',
+    );
     _debounceTimer?.cancel();
+    if (_debounceTimer?.isActive == true) {
+      SearchLogger.debug(
+        '[SearchEngine.searchImmediate] Cancelled pending debounce timer',
+      );
+    }
     SearchLogger.searchQuery(query, immediate: true);
     if (query.length < minQueryLength) {
-      _emit(_currentState.copyWith(
-        query: query,
-        results: const [],
-        status: query.isEmpty ? SearchStatus.idle : SearchStatus.empty,
-      ));
+      SearchLogger.debug(
+        '[SearchEngine.searchImmediate] Query too short -> idle/empty',
+      );
+      _emit(
+        _currentState.copyWith(
+          query: query,
+          results: const [],
+          status: query.isEmpty ? SearchStatus.idle : SearchStatus.empty,
+        ),
+      );
       return;
     }
     await _executeSearch(query);
   }
 
   Future<void> _executeSearch(String query) async {
+    // DEBUG: Entry
+    SearchLogger.debug(
+      '[SearchEngine._executeSearch] Starting for query="$query"',
+    );
     final requestId = ++_requestId;
+    SearchLogger.debug(
+      '[SearchEngine._executeSearch] Assigned requestId=$requestId (current _requestId=$_requestId)',
+    );
 
     final stopwatch = Stopwatch()..start();
     try {
+      SearchLogger.debug(
+        '[SearchEngine._executeSearch] Calling adapter.search with limit=$maxResults',
+      );
       final results = await adapter.search(query, limit: maxResults);
       stopwatch.stop();
       SearchLogger.adapterResults(
-          adapter.runtimeType.toString(), results.length, stopwatch.elapsed);
+        adapter.runtimeType.toString(),
+        results.length,
+        stopwatch.elapsed,
+      );
 
       // Only emit if this is still the latest request (cancellation)
-      if (requestId != _requestId) return;
+      if (requestId != _requestId) {
+        SearchLogger.debug(
+          '[SearchEngine._executeSearch] Request $requestId cancelled (current requestId=$_requestId) -> ignoring results',
+        );
+        return;
+      }
 
       if (results.isEmpty) {
-        _emit(_currentState.copyWith(
-          query: query,
-          results: const [],
-          sections: const [],
-          status: SearchStatus.empty,
-        ));
+        SearchLogger.debug(
+          '[SearchEngine._executeSearch] No results -> empty state',
+        );
+        _emit(
+          _currentState.copyWith(
+            query: query,
+            results: const [],
+            sections: const [],
+            status: SearchStatus.empty,
+          ),
+        );
       } else {
-        _emit(_currentState.copyWith(
-          query: query,
-          results: results,
-          status: SearchStatus.success,
-        ));
+        SearchLogger.debug(
+          '[SearchEngine._executeSearch] Got ${results.length} results -> success state',
+        );
+        _emit(
+          _currentState.copyWith(
+            query: query,
+            results: results,
+            status: SearchStatus.success,
+          ),
+        );
       }
     } catch (e, st) {
       stopwatch.stop();
-      SearchLogger.adapterError(adapter.runtimeType.toString(), e,
-          stackTrace: st);
+      SearchLogger.debug('[SearchEngine._executeSearch] Exception caught: $e');
+      SearchLogger.adapterError(
+        adapter.runtimeType.toString(),
+        e,
+        stackTrace: st,
+      );
 
-      if (requestId != _requestId) return;
+      if (requestId != _requestId) {
+        SearchLogger.debug(
+          '[SearchEngine._executeSearch] Error for stale request $requestId -> ignoring',
+        );
+        return;
+      }
 
-      _emit(_currentState.copyWith(
-        query: query,
-        status: SearchStatus.error,
-        error: e.toString(),
-      ));
+      SearchLogger.debug(
+        '[SearchEngine._executeSearch] Emitting error state: $e',
+      );
+      _emit(
+        _currentState.copyWith(
+          query: query,
+          status: SearchStatus.error,
+          error: e.toString(),
+        ),
+      );
     }
   }
 
   /// Fetches search suggestions for the given [query].
   Future<List<String>> suggest(String query) async {
+    SearchLogger.debug('[SearchEngine.suggest] Called with query="$query"');
     try {
       final suggestions = await adapter.suggest(query);
       SearchLogger.debug(
-          '[Suggest] ${suggestions.length} suggestion(s) for "$query"');
+        '[Suggest] ${suggestions.length} suggestion(s) for "$query"',
+      );
+      SearchLogger.debug(
+        '[SearchEngine.suggest] Returning suggestions: $suggestions',
+      );
       return suggestions;
     } catch (e) {
       SearchLogger.warning('[Suggest] failed for "$query": $e');
+      SearchLogger.debug(
+        '[SearchEngine.suggest] Returning empty list due to error',
+      );
       return const [];
     }
   }
 
   /// Clears the current search state.
   void clear() {
+    SearchLogger.debug('[SearchEngine.clear] Called');
     _debounceTimer?.cancel();
+    if (_debounceTimer?.isActive == true) {
+      SearchLogger.debug(
+        '[SearchEngine.clear] Cancelled active debounce timer',
+      );
+    }
+    final oldRequestId = _requestId;
     _requestId++;
     SearchLogger.info('[Search] clear');
+    SearchLogger.debug(
+      '[SearchEngine.clear] Incremented requestId from $oldRequestId to $_requestId',
+    );
     _emit(const SearchState());
   }
 
   void _emit(SearchState<T> state) {
+    // DEBUG: Log emission
+    SearchLogger.debug(
+      '[SearchEngine._emit] Emitting state: status=${state.status}, query="${state.query}", results=${state.results.length}, error=${state.error}',
+    );
     final oldStatus = _currentState.status;
     _currentState = state;
     if (oldStatus != state.status) {
@@ -163,17 +264,27 @@ class SearchEngine<T> {
         state.status.name,
         query: state.query,
       );
+      SearchLogger.debug(
+        '[SearchEngine._emit] Status transition: ${oldStatus.name} -> ${state.status.name}',
+      );
     }
     if (!_stateController.isClosed) {
       _stateController.add(state);
+      SearchLogger.debug('[SearchEngine._emit] State added to stream');
+    } else {
+      SearchLogger.debug(
+        '[SearchEngine._emit] State controller is closed, cannot add state',
+      );
     }
   }
 
   /// Disposes resources.
   void dispose() {
+    SearchLogger.debug('[SearchEngine.dispose] Called');
     _debounceTimer?.cancel();
     _stateController.close();
     adapter.dispose();
+    SearchLogger.debug('[SearchEngine.dispose] Resources disposed');
   }
 }
 
@@ -204,20 +315,27 @@ class SearchPlusController<T> extends ChangeNotifier {
     int maxResults = 50,
     this.maxHistoryItems = 10,
   }) : _engine = SearchEngine<T>(
-          adapter: adapter,
-          debounceDuration: debounceDuration,
-          minQueryLength: minQueryLength,
-          maxResults: maxResults,
-        ) {
+         adapter: adapter,
+         debounceDuration: debounceDuration,
+         minQueryLength: minQueryLength,
+         maxResults: maxResults,
+       ) {
+    SearchLogger.debug(
+      '[SearchPlusController] Created with maxHistoryItems=$maxHistoryItems',
+    );
     _subscription = _engine.stateStream.listen((state) {
+      SearchLogger.debug(
+        '[SearchPlusController] Received state from engine: status=${state.status}, query="${state.query}"',
+      );
       _state = state.copyWith(history: _history, error: state.error);
       notifyListeners();
+      SearchLogger.debug('[SearchPlusController] Notified listeners');
     });
   }
 
   final SearchEngine<T> _engine;
   late final StreamSubscription<SearchState<T>> _subscription;
-  SearchState<T> _state = const SearchState();
+  SearchState<T> _state = SearchState();
   final List<String> _history = [];
 
   /// Maximum number of history items to keep.
@@ -235,41 +353,78 @@ class SearchPlusController<T> extends ChangeNotifier {
   SearchStatus get status => _state.status;
 
   /// Performs a debounced search.
-  void search(String query) => _engine.search(query);
+  void search(String query) {
+    SearchLogger.debug(
+      '[SearchPlusController.search] Delegating to engine with query="$query"',
+    );
+    _engine.search(query);
+  }
 
   /// Performs an immediate search.
-  Future<void> searchImmediate(String query) =>
-      _engine.searchImmediate(query);
+  Future<void> searchImmediate(String query) {
+    SearchLogger.debug(
+      '[SearchPlusController.searchImmediate] Delegating to engine with query="$query"',
+    );
+    return _engine.searchImmediate(query);
+  }
 
   /// Gets suggestions for the current query.
-  Future<List<String>> suggest(String query) => _engine.suggest(query);
+  Future<List<String>> suggest(String query) {
+    SearchLogger.debug(
+      '[SearchPlusController.suggest] Delegating to engine with query="$query"',
+    );
+    return _engine.suggest(query);
+  }
 
   /// Adds a query to search history.
   void addToHistory(String query) {
-    if (query.trim().isEmpty) return;
+    SearchLogger.debug(
+      '[SearchPlusController.addToHistory] Adding query="$query"',
+    );
+    if (query.trim().isEmpty) {
+      SearchLogger.debug(
+        '[SearchPlusController.addToHistory] Query empty, ignoring',
+      );
+      return;
+    }
     _history.remove(query);
     _history.insert(0, query);
     if (_history.length > maxHistoryItems) {
-      _history.removeLast();
+      final removed = _history.removeLast();
+      SearchLogger.debug(
+        '[SearchPlusController.addToHistory] Exceeded maxHistoryItems, removed "$removed"',
+      );
     }
     _state = _state.copyWith(history: List.unmodifiable(_history));
     notifyListeners();
+    SearchLogger.debug(
+      '[SearchPlusController.addToHistory] History now: $_history',
+    );
   }
 
   /// Clears search history.
   void clearHistory() {
+    SearchLogger.debug(
+      '[SearchPlusController.clearHistory] Clearing history (was $_history)',
+    );
     _history.clear();
     _state = _state.copyWith(history: const []);
     notifyListeners();
+    SearchLogger.debug('[SearchPlusController.clearHistory] History cleared');
   }
 
   /// Clears the current search.
-  void clear() => _engine.clear();
+  void clear() {
+    SearchLogger.debug('[SearchPlusController.clear] Delegating to engine');
+    _engine.clear();
+  }
 
   @override
   void dispose() {
+    SearchLogger.debug('[SearchPlusController.dispose] Called');
     _subscription.cancel();
     _engine.dispose();
     super.dispose();
+    SearchLogger.debug('[SearchPlusController.dispose] Disposed');
   }
 }

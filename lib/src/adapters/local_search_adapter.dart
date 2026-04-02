@@ -3,42 +3,30 @@ import 'dart:math' as math;
 import '../core/search_result.dart';
 import 'search_adapter.dart';
 
-/// A search adapter that searches through an in-memory list of items.
-///
-/// Supports exact, prefix, contains, and fuzzy matching with configurable
-/// scoring and ranking.
-///
-/// ```dart
-/// final adapter = LocalSearchAdapter<Product>(
-///   items: products,
-///   searchableFields: (p) => [p.name, p.description],
-///   toResult: (p) => SearchResult(id: p.id, title: p.name, data: p),
-/// );
-/// ```
 class LocalSearchAdapter<T> extends SearchAdapter<T> {
-  /// Creates a local search adapter.
   LocalSearchAdapter({
     required this.items,
     required this.searchableFields,
     required this.toResult,
     this.rankingConfig = const SearchRankingConfig(),
     this.enableFuzzySearch = false,
+    this.enableDebug = false,
   });
 
-  /// The full list of items to search through.
   List<T> items;
-
-  /// Extracts searchable text fields from an item.
   final List<String> Function(T item) searchableFields;
-
-  /// Converts an item to a [SearchResult].
   final SearchResult<T> Function(T item) toResult;
-
-  /// Configuration for ranking and scoring.
   final SearchRankingConfig rankingConfig;
-
-  /// Whether to enable fuzzy search matching.
   final bool enableFuzzySearch;
+
+  /// 🔥 Debug flag
+  final bool enableDebug;
+
+  void _log(String message) {
+    if (enableDebug) {
+      print('[LocalSearchAdapter] $message');
+    }
+  }
 
   @override
   Future<List<SearchResult<T>>> search(
@@ -46,7 +34,13 @@ class LocalSearchAdapter<T> extends SearchAdapter<T> {
     int limit = 50,
     int offset = 0,
   }) async {
-    if (query.isEmpty) return const [];
+    _log('--- SEARCH START ---');
+    _log('Query: "$query"');
+
+    if (query.isEmpty) {
+      _log('Query is empty → returning []');
+      return const [];
+    }
 
     final normalizedQuery = query.toLowerCase().trim();
     final scored = <SearchResult<T>>[];
@@ -55,54 +49,99 @@ class LocalSearchAdapter<T> extends SearchAdapter<T> {
       final fields = searchableFields(item);
       double bestScore = 0.0;
 
+      _log('Item: $item');
+
       for (int i = 0; i < fields.length; i++) {
         final field = fields[i].toLowerCase();
-        final weight =
-            i == 0 ? rankingConfig.titleWeight : rankingConfig.subtitleWeight;
-        final score = _scoreMatch(normalizedQuery, field) * weight;
-        if (score > bestScore) bestScore = score;
+        final weight = i == 0
+            ? rankingConfig.titleWeight
+            : rankingConfig.subtitleWeight;
+
+        final rawScore = _scoreMatch(normalizedQuery, field);
+        final score = rawScore * weight;
+
+        _log(' Field[$i]: "$field"');
+        _log('  RawScore: $rawScore | Weight: $weight | FinalScore: $score');
+
+        if (score > bestScore) {
+          bestScore = score;
+        }
       }
 
       if (bestScore > 0) {
         final result = toResult(item);
-        scored.add(result.copyWith(
-          score: bestScore,
-          source: SearchResultSource.local,
-        ));
+        _log(' ✅ MATCH → Score: $bestScore');
+
+        scored.add(
+          result.copyWith(score: bestScore, source: SearchResultSource.local),
+        );
+      } else {
+        _log(' ❌ NO MATCH');
       }
     }
 
+    _log('Sorting results...');
     scored.sort();
 
     final end = math.min(offset + limit, scored.length);
-    if (offset >= scored.length) return const [];
-    return scored.sublist(offset, end);
+
+    if (offset >= scored.length) {
+      _log('Offset خارج از محدوده → []');
+      return const [];
+    }
+
+    final finalResults = scored.sublist(offset, end);
+
+    _log('Final Results Count: ${finalResults.length}');
+    _log('--- SEARCH END ---');
+
+    return finalResults;
   }
 
   double _scoreMatch(String query, String field) {
+    _log('   → Matching "$query" with "$field"');
+
     // Exact match
-    if (field == query) return 1.0 * rankingConfig.boostExactMatch;
+    if (field == query) {
+      _log('   ✔ Exact Match');
+      return 1.0 * rankingConfig.boostExactMatch;
+    }
 
     // Prefix match
-    if (field.startsWith(query)) return 0.9 * rankingConfig.boostPrefixMatch;
+    if (field.startsWith(query)) {
+      _log('   ✔ Prefix Match');
+      return 0.9 * rankingConfig.boostPrefixMatch;
+    }
 
-    // Word-start match (e.g., searching "app" matches "my application")
+    // Word-start match
     final words = field.split(RegExp(r'\s+'));
     for (final word in words) {
-      if (word.startsWith(query)) return 0.8;
+      if (word.startsWith(query)) {
+        _log('   ✔ Word-start Match');
+        return 0.8;
+      }
     }
 
     // Contains match
-    if (field.contains(query)) return 0.6;
+    if (field.contains(query)) {
+      _log('   ✔ Contains Match');
+      return 0.6;
+    }
 
     // Fuzzy match
     if (enableFuzzySearch) {
       final distance = _levenshteinDistance(query, field);
       final maxLen = math.max(query.length, field.length);
-      if (maxLen == 0) return 0.0;
-      final similarity = 1.0 - (distance / maxLen);
+
+      final similarity = maxLen == 0 ? 0.0 : 1.0 - (distance / maxLen);
+
+      _log('   🔍 Fuzzy → distance: $distance | similarity: $similarity');
+
       if (similarity >= (1.0 - rankingConfig.fuzzyThreshold)) {
+        _log('   ✔ Fuzzy Match Accepted');
         return similarity * 0.4;
+      } else {
+        _log('   ❌ Fuzzy Rejected');
       }
     }
 
@@ -110,10 +149,6 @@ class LocalSearchAdapter<T> extends SearchAdapter<T> {
   }
 
   static int _levenshteinDistance(String s, String t) {
-    if (s.isEmpty) return t.length;
-    if (t.isEmpty) return s.length;
-
-    // Only compare against each word in t for better fuzzy matching
     final words = t.split(RegExp(r'\s+'));
     int bestDistance = s.length + t.length;
 
@@ -128,9 +163,6 @@ class LocalSearchAdapter<T> extends SearchAdapter<T> {
   static int _levenshteinWord(String s, String t) {
     final sLen = s.length;
     final tLen = t.length;
-
-    if (sLen == 0) return tLen;
-    if (tLen == 0) return sLen;
 
     var previous = List<int>.generate(tLen + 1, (i) => i);
     var current = List<int>.filled(tLen + 1, 0);
@@ -154,7 +186,13 @@ class LocalSearchAdapter<T> extends SearchAdapter<T> {
 
   @override
   Future<List<String>> suggest(String query) async {
-    if (query.isEmpty) return const [];
+    _log('--- SUGGEST START ---');
+    _log('Query: "$query"');
+
+    if (query.isEmpty) {
+      _log('Query empty → []');
+      return const [];
+    }
 
     final normalizedQuery = query.toLowerCase().trim();
     final seen = <String>{};
@@ -162,14 +200,24 @@ class LocalSearchAdapter<T> extends SearchAdapter<T> {
 
     for (final item in items) {
       final fields = searchableFields(item);
+
       for (final field in fields) {
-        if (field.toLowerCase().startsWith(normalizedQuery) &&
-            seen.add(field)) {
+        final lower = field.toLowerCase();
+
+        if (lower.startsWith(normalizedQuery) && seen.add(field)) {
+          _log('Suggestion added: $field');
           suggestions.add(field);
-          if (suggestions.length >= 5) return suggestions;
+
+          if (suggestions.length >= 5) {
+            _log('Limit reached');
+            return suggestions;
+          }
         }
       }
     }
+
+    _log('Suggestions Count: ${suggestions.length}');
+    _log('--- SUGGEST END ---');
 
     return suggestions;
   }
