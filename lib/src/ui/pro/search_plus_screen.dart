@@ -290,7 +290,7 @@ class _SearchPlusScreenState<T> extends State<SearchPlusScreen<T>>
         return TweenAnimationBuilder<double>(
           key: ValueKey(result.id),
           tween: Tween(begin: 0.0, end: 1.0),
-          duration: Duration(milliseconds: 200 + (index * 30)),
+          duration: Duration(milliseconds: 200 + (index.clamp(0, 10) * 30)),
           curve: Curves.easeOut,
           builder: (context, value, child) {
             return Opacity(

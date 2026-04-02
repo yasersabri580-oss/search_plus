@@ -630,7 +630,7 @@ class _DevToolsStatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
-        color: color.withAlpha(40),
+        color: color.withValues(alpha: 40 / 255),
         borderRadius: BorderRadius.circular(4),
         border: Border.all(color: color, width: 0.5),
       ),
@@ -657,7 +657,7 @@ class _SourceBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
-        color: Colors.blue.withAlpha(30),
+        color: Colors.blue.withValues(alpha: 30 / 255),
         borderRadius: BorderRadius.circular(3),
       ),
       child: Text(
@@ -693,9 +693,9 @@ class _MetricCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: color.withAlpha(20),
+          color: color.withValues(alpha: 20 / 255),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withAlpha(60)),
+          border: Border.all(color: color.withValues(alpha: 60 / 255)),
         ),
         child: Row(
           children: [
@@ -746,7 +746,7 @@ class _TimingBar extends StatelessWidget {
       child: Container(
         height: 8,
         decoration: BoxDecoration(
-          color: Colors.grey.withAlpha(30),
+          color: Colors.grey.withValues(alpha: 30 / 255),
           borderRadius: BorderRadius.circular(4),
         ),
         child: FractionallySizedBox(

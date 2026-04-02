@@ -46,6 +46,8 @@ class RetryStrategy {
   /// If `null`, all errors are retried.
   final bool Function(Object error, int attempt)? retryIf;
 
+  static final _random = Random();
+
   /// Calculates the delay for the given [attempt] number (0-based).
   Duration delayForAttempt(int attempt) {
     Duration delay;
@@ -60,7 +62,7 @@ class RetryStrategy {
     }
 
     if (jitter) {
-      final jitterMs = Random().nextInt(delay.inMilliseconds ~/ 4 + 1);
+      final jitterMs = _random.nextInt(delay.inMilliseconds ~/ 4 + 1);
       delay = Duration(milliseconds: delay.inMilliseconds + jitterMs);
     }
 
