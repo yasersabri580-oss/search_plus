@@ -9,6 +9,7 @@ export 'src/core/search_controller.dart';
 export 'src/core/search_result.dart';
 export 'src/core/search_state.dart';
 export 'src/core/search_config.dart';
+export 'src/core/search_plus_config.dart';
 export 'src/core/search_history_storage.dart';
 
 // Adapters
