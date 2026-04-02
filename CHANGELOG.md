@@ -1,6 +1,8 @@
 # Changelog
 
-## 3.0.0
+## 3.1.0
 
-- Fixed the search result error
-- Added more advance animations
+- Increase performance
+- added more features to local and remote search
+- added not found widget for overlay search
+- enhance UI/Ux

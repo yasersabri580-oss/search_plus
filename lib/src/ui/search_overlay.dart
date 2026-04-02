@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:search_plus/search_plus.dart';
 
 import '../animations/animation_presets.dart';
 import '../core/search_controller.dart';

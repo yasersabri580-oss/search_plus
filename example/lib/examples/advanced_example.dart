@@ -26,7 +26,8 @@ class _AdvancedExampleState extends State<AdvancedExample> {
     super.initState();
     _controller = SearchPlusController<AppUser>(
       adapter: RemoteSearchAdapter<AppUser>(
-        searchFunction: (query, limit, offset) => _api.searchUsers(query, limit: limit, offset: offset),
+        searchFunction: (query, limit, offset) =>
+            _api.searchUsers(query, limit: limit, offset: offset),
         suggestFunction: _api.suggestUsers,
       ),
       debounceDuration: const Duration(milliseconds: 400),
@@ -103,8 +104,7 @@ class _AdvancedExampleState extends State<AdvancedExample> {
           ),
           itemBuilder: (context, result, index) {
             final user = result.data;
-            final isVerified =
-                (result.metadata['verified'] as bool?) ?? false;
+            final isVerified = (result.metadata['verified'] as bool?) ?? false;
             return _UserTile(
               result: result,
               query: _controller.query,
@@ -123,10 +123,7 @@ class _AdvancedExampleState extends State<AdvancedExample> {
 // ---------------------------------------------------------------------------
 
 class _IdleView extends StatelessWidget {
-  const _IdleView({
-    required this.controller,
-    required this.onSearch,
-  });
+  const _IdleView({required this.controller, required this.onSearch});
 
   final SearchPlusController<AppUser> controller;
   final ValueChanged<String> onSearch;
@@ -203,9 +200,9 @@ class _SectionHeader extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
           ),
           const Spacer(),
           ?trailing,
@@ -251,7 +248,6 @@ class _UserTile extends StatelessWidget {
         children: [
           Flexible(
             child: HighlightText(
-              matchedText: query,
               text: result.title,
               query: query,
               highlightStyle: TextStyle(
@@ -262,11 +258,7 @@ class _UserTile extends StatelessWidget {
           ),
           if (isVerified) ...[
             const SizedBox(width: 4),
-            Icon(
-              Icons.verified,
-              size: 16,
-              color: colorScheme.primary,
-            ),
+            Icon(Icons.verified, size: 16, color: colorScheme.primary),
           ],
         ],
       ),
