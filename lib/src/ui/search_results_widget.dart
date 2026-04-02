@@ -77,6 +77,7 @@ class SearchPlusResults<T> extends StatelessWidget {
     this.physics,
     this.padding,
     this.shrinkWrap = false,
+    this.emptyBuilder,
   });
 
   /// Current search state.
@@ -139,6 +140,11 @@ class SearchPlusResults<T> extends StatelessWidget {
   /// Whether to shrink wrap the list.
   final bool shrinkWrap;
 
+  /// Custom builder for the empty state. If provided, this is used instead
+  /// of [emptyState] widget or the default [SearchEmptyState].
+  /// Receives the current build context and the search query.
+  final Widget Function(BuildContext context, String query)? emptyBuilder;
+
   @override
   Widget build(BuildContext context) {
     _debug('build called, status=${state.status}, resultsCount=${state.results.length}, layout=$layout, density=$density');
@@ -183,7 +189,10 @@ class SearchPlusResults<T> extends StatelessWidget {
               onRetry: onRetry,
             );
       case SearchStatus.empty:
-        _debug('empty state -> ${emptyState != null ? "custom empty" : "default empty"}, query=${state.query}');
+        _debug('empty state -> ${emptyBuilder != null ? "custom emptyBuilder" : (emptyState != null ? "custom empty" : "default empty")}, query=${state.query}');
+        if (emptyBuilder != null) {
+          return emptyBuilder!(context, state.query);
+        }
         return emptyState ??
             SearchEmptyState(query: state.query);
       case SearchStatus.success:

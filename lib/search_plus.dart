@@ -24,6 +24,9 @@ export 'src/ui/search_results_widget.dart';
 export 'src/ui/search_scaffold.dart';
 export 'src/ui/search_overlay.dart';
 export 'src/ui/states/search_states.dart';
+export 'src/ui/suggestion_chips.dart';
+export 'src/ui/search_history_list.dart';
+export 'src/ui/scroll_to_top_button.dart';
 
 // Theme
 export 'src/theme/search_theme.dart';

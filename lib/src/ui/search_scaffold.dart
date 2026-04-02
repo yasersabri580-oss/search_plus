@@ -57,6 +57,7 @@ class SearchScaffold<T> extends StatefulWidget {
     this.theme,
     this.localizations,
     this.addToHistoryOnSubmit = true,
+    this.emptyBuilder,
   });
 
   /// The search controller.
@@ -152,6 +153,11 @@ class SearchScaffold<T> extends StatefulWidget {
   /// Whether to add to history on submit.
   final bool addToHistoryOnSubmit;
 
+  /// Custom builder for the empty state. If provided, this is used instead
+  /// of [emptyState] or the default empty state widget.
+  /// Receives the build context and the search query.
+  final Widget Function(BuildContext context, String query)? emptyBuilder;
+
   @override
   State<SearchScaffold<T>> createState() => _SearchScaffoldState<T>();
 }
@@ -227,6 +233,7 @@ class _SearchScaffoldState<T> extends State<SearchScaffold<T>> {
                   physics: widget.physics,
                   padding: widget.resultsPadding,
                   shrinkWrap: widget.shrinkWrap,
+                  emptyBuilder: widget.emptyBuilder,
                 ),
               ),
           ],
