@@ -124,9 +124,9 @@ void main() {
         ),
       ));
 
-      await tester.tap(find.byType(TextField));
+      await tester.enterText(find.byType(TextField), 'test text');
       await tester.pump();
-      // readOnly field should not accept input
+      // readOnly field should not trigger onChanged
       expect(changedValue, isNull);
     });
 
@@ -169,12 +169,10 @@ void main() {
         const SearchPlusBar(height: 72),
       ));
 
-      final animatedContainer = tester.widget<AnimatedContainer>(
-        find.byType(AnimatedContainer),
-      );
-      final constraints = animatedContainer.constraints;
-      // The height is set via the AnimatedContainer's height property
-      expect(animatedContainer.decoration, isNotNull);
+      // SearchPlusBar passes height to the AnimatedContainer
+      // Verify the TextField is rendered (widget tree is valid with custom height)
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.byType(AnimatedContainer), findsOneWidget);
     });
 
     testWidgets('applies inputFormatters to text field', (tester) async {

@@ -139,7 +139,7 @@ class SearchPlusBar extends StatefulWidget {
   /// Keyboard type for the text field.
   ///
   /// Defaults to the platform default. Set to [TextInputType.url] or
-  /// [TextInputType.emailAddress] for specialised search contexts.
+  /// [TextInputType.emailAddress] for specialized search contexts.
   final TextInputType? keyboardType;
 
   /// Optional input formatters applied to the text field.

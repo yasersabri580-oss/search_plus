@@ -105,7 +105,7 @@ That's it — debouncing, state management, empty/loading/error states, and anim
 
 `SearchPlusBar` is a **standalone, fully generic** Material 3 search input. Unlike
 Flutter's built-in `SearchBar`, it is designed to slot into *any* screen, control
-*any* data type, and be customised at the widget level without a global theme.
+*any* data type, and be customized at the widget level without a global theme.
 
 ### Why use SearchPlusBar?
 
