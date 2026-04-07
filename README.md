@@ -101,6 +101,187 @@ That's it — debouncing, state management, empty/loading/error states, and anim
 
 ---
 
+## 🔍 SearchPlusBar — The Generic Search Input
+
+`SearchPlusBar` is a **standalone, fully generic** Material 3 search input. Unlike
+Flutter's built-in `SearchBar`, it is designed to slot into *any* screen, control
+*any* data type, and be customised at the widget level without a global theme.
+
+### Why use SearchPlusBar?
+
+| Capability | `SearchPlusBar` | Flutter `SearchBar` | Manual `TextField` |
+|---|---|---|---|
+| Material 3 styling out of the box | ✅ | ✅ | ❌ (manual) |
+| Animated focus elevation & border | ✅ automatic | ❌ | ❌ |
+| Built-in clear / voice / filter buttons | ✅ conditional | ❌ | ❌ |
+| Debounce progress indicator | ✅ opt-in | ❌ | ❌ |
+| `readOnly` + `onTap` (tap-to-navigate) | ✅ | ❌ | ✅ |
+| Direct `textStyle` / `hintStyle` override | ✅ | ❌ | ✅ |
+| Works with `SearchPlusController<T>` | ✅ plug-and-play | ❌ | ❌ |
+| Standalone (no controller needed) | ✅ | ✅ | ✅ |
+| Custom `inputFormatters` | ✅ | ❌ | ✅ |
+| Deep theming via `SearchTheme` | ✅ | ❌ | ❌ |
+| Localization via `SearchLocalizations` | ✅ automatic | ❌ | ❌ |
+| Accessibility (semantic labels, tooltips) | ✅ built-in | partial | ❌ (manual) |
+
+### When to use SearchPlusBar
+
+Use it whenever you need a search input — it handles all the boilerplate:
+
+| Scenario | How |
+|----------|-----|
+| **Product catalog search** | `onChanged` → controller.search() |
+| **Tap-to-open search page** | `readOnly: true` + `onTap` |
+| **App bar search** | Place inside `AppBar` with custom `height: 44` |
+| **Settings / preference filter** | Standalone with `onChanged` only |
+| **Chat message search** | Pair with `SearchPlusOverlay` |
+| **Command palette / spotlight** | `autofocus: true` + overlay mode |
+| **Number-only search** (order IDs) | `keyboardType: TextInputType.number` + `inputFormatters` |
+| **Multi-language app** | Wrap in `SearchLocalizationsProvider` |
+
+### SearchPlusBar examples
+
+#### 1. Basic — search a list
+
+```dart
+SearchPlusBar(
+  onChanged: (query) => controller.search(query),
+  hintText: 'Search products…',
+)
+```
+
+#### 2. Tap-to-navigate (hero search bar)
+
+A common pattern on home screens: a decorative search bar that, when tapped,
+pushes a dedicated search page.
+
+```dart
+SearchPlusBar(
+  readOnly: true,
+  onTap: () => Navigator.push(
+    context,
+    MaterialPageRoute(builder: (_) => const FullSearchPage()),
+  ),
+  hintText: 'Tap to search…',
+  leading: const Icon(Icons.search),
+)
+```
+
+#### 3. Styled inline — no theme wrapper needed
+
+```dart
+SearchPlusBar(
+  onChanged: (q) => controller.search(q),
+  hintText: 'Find a recipe…',
+  textStyle: const TextStyle(fontSize: 18),
+  hintStyle: TextStyle(fontSize: 18, color: Colors.grey.shade400),
+  height: 52,
+  borderRadius: BorderRadius.circular(12),
+  backgroundColor: Colors.white,
+  elevation: 0,
+)
+```
+
+#### 4. With voice + filter actions
+
+```dart
+SearchPlusBar(
+  onChanged: (q) => controller.search(q),
+  onSubmitted: (q) => controller.addToHistory(q),
+  onVoiceSearch: () => startVoiceInput(),
+  onFilterPressed: () => showFilterSheet(context),
+  showDebounceIndicator: true,
+)
+```
+
+#### 5. Number-only input (order ID search)
+
+```dart
+SearchPlusBar(
+  hintText: 'Enter order number…',
+  keyboardType: TextInputType.number,
+  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+  onSubmitted: (orderId) => lookUpOrder(orderId),
+)
+```
+
+#### 6. Inside an AppBar
+
+```dart
+AppBar(
+  title: SearchPlusBar(
+    height: 44,
+    onChanged: (q) => controller.search(q),
+    hintText: 'Search messages…',
+    borderRadius: BorderRadius.circular(22),
+    elevation: 0,
+  ),
+)
+```
+
+### SearchPlusBar parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `onChanged` | `ValueChanged<String>?` | — | Called on every text change |
+| `onSubmitted` | `ValueChanged<String>?` | — | Called on keyboard "search" action |
+| `onTap` | `VoidCallback?` | — | Called when bar is tapped (tap-to-navigate) |
+| `onFocusChanged` | `ValueChanged<bool>?` | — | Called when focus state changes |
+| `controller` | `TextEditingController?` | auto | External text controller |
+| `focusNode` | `FocusNode?` | auto | External focus node |
+| `hintText` | `String?` | localized | Placeholder text |
+| `leading` | `Widget?` | search icon | Leading widget |
+| `trailing` | `Widget?` | — | Trailing widget |
+| `autofocus` | `bool` | `false` | Auto-request focus on mount |
+| `enabled` | `bool` | `true` | Whether input is enabled |
+| `readOnly` | `bool` | `false` | Display-only mode (combine with `onTap`) |
+| `showClearButton` | `bool` | `true` | Show ✕ button when text is present |
+| `onVoiceSearch` | `VoidCallback?` | — | Show 🎤 button; callback when pressed |
+| `onFilterPressed` | `VoidCallback?` | — | Show filter button; callback when pressed |
+| `textInputAction` | `TextInputAction` | `search` | Keyboard action button |
+| `textCapitalization` | `TextCapitalization` | `none` | Input capitalization |
+| `keyboardType` | `TextInputType?` | platform | Keyboard type (number, email, url, …) |
+| `inputFormatters` | `List<TextInputFormatter>?` | — | Input validation / formatting |
+| `showDebounceIndicator` | `bool` | `false` | Show typing progress bar |
+| `borderRadius` | `BorderRadius?` | theme | Custom border radius |
+| `elevation` | `double?` | theme | Custom elevation |
+| `backgroundColor` | `Color?` | theme | Custom background color |
+| `textStyle` | `TextStyle?` | theme | Direct text style override |
+| `hintStyle` | `TextStyle?` | theme | Direct hint text style override |
+| `height` | `double?` | 56 | Direct height override |
+| `contentPadding` | `EdgeInsets?` | zero | TextField content padding |
+
+---
+
+## 🆚 Why Search Plus vs. Alternatives
+
+| Feature | **search_plus** | DIY `TextField` + `FutureBuilder` | Flutter `SearchBar` + `SearchAnchor` | Other pub packages |
+|---|---|---|---|---|
+| Zero boilerplate for full search UX | ✅ | ❌ lots of code | partial | varies |
+| Adapter architecture (swap data source) | ✅ | ❌ | ❌ | rare |
+| Local + Remote + Hybrid in one package | ✅ | ❌ | ❌ | rare |
+| Ranked local search (exact → fuzzy) | ✅ | ❌ | ❌ | some |
+| Overlay **and** inline result modes | ✅ | manual | overlay only | varies |
+| 7 animation presets + shimmer | ✅ | ❌ | ❌ | some |
+| Persistent search history | ✅ pluggable | ❌ | ❌ | some |
+| Theming (30+ properties) | ✅ | ❌ | limited | varies |
+| Localization (13 strings) | ✅ | ❌ | ❌ | rare |
+| Pagination (`loadMore`) | ✅ | manual | ❌ | some |
+| Zero runtime dependencies | ✅ | ✅ | ✅ | ❌ (often) |
+| Type-safe generics `<T>` | ✅ | ❌ | ❌ | varies |
+
+### Where search_plus is most useful
+
+- **E-commerce apps** — product search with images, categories, filters, and price ranges.
+- **Social / messaging apps** — search users, messages, or channels with overlay dropdown.
+- **Content apps** (news, blogs, docs) — full-text search with highlighting.
+- **Enterprise dashboards** — search tables, reports, or records with pagination.
+- **Settings / preference screens** — filter long lists with a minimal search bar.
+- **Multi-source apps** — combine local cache + remote API with `HybridSearchAdapter`.
+- **Offline-first apps** — `LocalSearchAdapter` works without network, `HybridSearchAdapter` falls back gracefully.
+
+---
+
 ## 🧩 Examples
 
 The `/example` app ships with **seven runnable examples**, from minimal to full showcase. Run them with:
@@ -690,9 +871,12 @@ Works with: **REST**, **GraphQL**, **gRPC**, **Hive**, **Isar**, **SQLite**, **E
 | Widget | Purpose |
 |--------|---------|
 | `SearchScaffold<T>` | Complete search UI (bar + results + states) |
-| `SearchPlusBar` | Standalone Material 3 search input |
-| `SearchResultsWidget<T>` | Results display (list / grid / sectioned) |
-| `SearchOverlay<T>` | Floating dropdown result panel |
+| `SearchPlusBar` | Standalone generic Material 3 search input (see [deep-dive](#-searchplusbar--the-generic-search-input)) |
+| `SearchPlusResults<T>` | Results display (list / grid / sectioned) |
+| `SearchPlusOverlay<T>` | Floating dropdown result panel |
+| `SuggestionChips` | Trending / auto-complete suggestion chips |
+| `SearchHistoryList` | Recent search history with remove actions |
+| `ScrollToTopButton` | FAB that appears on scroll |
 | `SearchEmptyState` | No-results UI |
 | `SearchErrorState` | Error UI with retry |
 | `SearchLoadingState` | Loading UI with shimmer |
@@ -728,21 +912,45 @@ lib/
     │   └── hybrid_search_adapter.dart
     ├── animations/               # Animation system
     │   └── animation_presets.dart
+    ├── cache/                    # Caching layer
+    │   ├── search_cache.dart
+    │   └── cached_search_adapter.dart
     ├── core/                     # Business logic
     │   ├── search_controller.dart
     │   ├── search_result.dart
     │   ├── search_state.dart
     │   ├── search_config.dart
+    │   ├── search_plus_config.dart
     │   └── search_history_storage.dart
     ├── l10n/                     # Localization
     │   └── search_localizations.dart
+    ├── remote/                   # Enhanced remote features
+    │   ├── remote_search_config.dart
+    │   ├── retry_strategy.dart
+    │   ├── cancellable_operation.dart
+    │   ├── query_deduplicator.dart
+    │   └── enhanced_remote_adapter.dart
     ├── theme/                    # Theming
     │   └── search_theme.dart
+    ├── utils/                    # Utilities
+    │   └── search_logger.dart
     └── ui/                       # Widgets
         ├── search_scaffold.dart
-        ├── search_bar_widget.dart
+        ├── search_bar_widget.dart    ← SearchPlusBar (generic search input)
         ├── search_results_widget.dart
         ├── search_overlay.dart
+        ├── suggestion_chips.dart
+        ├── search_history_list.dart
+        ├── scroll_to_top_button.dart
+        ├── debug/
+        │   └── search_debug_panel.dart
+        ├── devtools/
+        │   └── search_devtools_panel.dart
+        ├── pro/
+        │   ├── skeleton_loading.dart
+        │   ├── highlight_text.dart
+        │   ├── glassmorphism_container.dart
+        │   └── search_plus_screen.dart
         └── states/
             └── search_states.dart
 ```
@@ -751,7 +959,8 @@ lib/
 
 - **Separation of concerns**: UI, state, and data are fully decoupled
 - **Immutable state**: `SearchState` and `SearchResult` are immutable
-- **Generic types**: Full type safety with `SearchAdapter<T>`, `SearchResult<T>`
+- **Generic types**: Full type safety with `SearchAdapter<T>`, `SearchResult<T>`, `SearchPlusController<T>`
+- **Composable widgets**: Use `SearchPlusBar` alone, pair it with `SearchPlusResults`, or use the all-in-one `SearchScaffold` — your choice
 - **No external dependencies**: Zero runtime dependencies beyond Flutter SDK
 - **Tree-shakeable**: Import only what you use
 
@@ -784,6 +993,24 @@ lib/
 ### Import conflicts with Flutter's `SearchBarThemeData`
 
 - Use `import 'package:flutter/material.dart' hide SearchBarThemeData;` to resolve conflicts
+
+### SearchPlusBar onTap not firing
+
+- Ensure `enabled` is `true` (the default). A disabled bar ignores taps.
+- If using `readOnly: true`, the `onTap` callback fires on the `TextField` tap — make sure the bar is not obscured by another widget.
+
+---
+
+## 📝 Getting Started Checklist
+
+New to search_plus? Follow this path:
+
+1. **Install** — add `search_plus` to `pubspec.yaml` and run `flutter pub get`.
+2. **Pick an adapter** — `LocalSearchAdapter` for in-memory, `RemoteSearchAdapter` for API, or `HybridSearchAdapter` for both.
+3. **Create a controller** — `SearchPlusController<YourModel>(adapter: yourAdapter)`.
+4. **Drop in a widget** — start with `SearchScaffold` for the full experience, or `SearchPlusBar` + `SearchPlusResults` for more control.
+5. **Customise** — apply a `SearchTheme`, add animations, tweak `SearchConfig`, or override localizations.
+6. **Ship** 🚀
 
 ---
 
