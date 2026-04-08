@@ -3,7 +3,7 @@ description: >
   A production-grade Flutter search package with async API, local, and hybrid
   search adapters, plus polished UI widgets, theming, animations, and
   localization support.
-version: 3.1.1
+version: 3.1.2
 homepage: https://github.com/yasersabri580-oss/search_plus
 repository: https://github.com/yasersabri580-oss/search_plus
 issue_tracker: https://github.com/yasersabri580-oss/search_plus/issues
