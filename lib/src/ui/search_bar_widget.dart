@@ -1,19 +1,52 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n/search_localizations.dart';
 import '../theme/search_theme.dart';
 
-/// A highly customizable Material 3 search bar widget.
+/// A highly customizable, generic Material 3 search bar widget.
 ///
-/// Features animated focus state, clear button, and leading/trailing icon slots.
+/// [SearchPlusBar] is a standalone, drop-in search input that works in any
+/// Flutter screen — from a product catalog to a settings page. It adapts to
+/// its context through generous customization hooks while providing sensible
+/// Material 3 defaults out of the box.
+///
+/// ## Key capabilities
+///
+/// * **Animated focus state** — elevation, border color, and icon color
+///   animate when the bar receives or loses focus.
+/// * **Clear / voice / filter action buttons** — each conditionally shown
+///   based on callbacks you provide.
+/// * **Debounce indicator** — optional linear progress bar that shows while
+///   the user is still typing.
+/// * **Fully generic** — works with *any* data type via the parent
+///   [SearchPlusController<T>], or can be used standalone with just
+///   [onChanged] / [onSubmitted].
+/// * **Tap-to-navigate** — set [readOnly] + [onTap] to create a search bar
+///   that opens a dedicated search page when tapped.
+/// * **Direct style overrides** — pass [textStyle], [hintStyle], [height],
+///   or [contentPadding] without wrapping in a [SearchTheme].
+///
+/// ## Minimal example
 ///
 /// ```dart
 /// SearchPlusBar(
 ///   onChanged: (query) => controller.search(query),
 ///   hintText: 'Search products...',
 ///   leading: Icon(Icons.search),
+/// )
+/// ```
+///
+/// ## Tap-to-navigate example
+///
+/// ```dart
+/// SearchPlusBar(
+///   readOnly: true,
+///   onTap: () => Navigator.push(context,
+///     MaterialPageRoute(builder: (_) => FullSearchPage())),
+///   hintText: 'Tap to search…',
 /// )
 /// ```
 class SearchPlusBar extends StatefulWidget {
@@ -23,6 +56,7 @@ class SearchPlusBar extends StatefulWidget {
     this.onChanged,
     this.onSubmitted,
     this.onFocusChanged,
+    this.onTap,
     this.controller,
     this.focusNode,
     this.hintText,
@@ -30,15 +64,22 @@ class SearchPlusBar extends StatefulWidget {
     this.trailing,
     this.autofocus = false,
     this.enabled = true,
+    this.readOnly = false,
     this.showClearButton = true,
     this.onVoiceSearch,
     this.textInputAction = TextInputAction.search,
     this.textCapitalization = TextCapitalization.none,
+    this.keyboardType,
+    this.inputFormatters,
     this.onFilterPressed,
     this.showDebounceIndicator = false,
     this.borderRadius,
     this.elevation,
     this.backgroundColor,
+    this.textStyle,
+    this.hintStyle,
+    this.height,
+    this.contentPadding,
   });
 
   /// Called when the search text changes.
@@ -49,6 +90,12 @@ class SearchPlusBar extends StatefulWidget {
 
   /// Called when focus changes.
   final ValueChanged<bool>? onFocusChanged;
+
+  /// Called when the search bar is tapped.
+  ///
+  /// Useful for "tap to navigate" patterns where tapping the bar opens
+  /// a dedicated search page. Combine with [readOnly] = `true`.
+  final VoidCallback? onTap;
 
   /// Text editing controller.
   final TextEditingController? controller;
@@ -71,6 +118,12 @@ class SearchPlusBar extends StatefulWidget {
   /// Whether the search bar is enabled.
   final bool enabled;
 
+  /// Whether the search bar is read-only.
+  ///
+  /// When `true`, the text field does not accept keyboard input. Use together
+  /// with [onTap] to create a search bar that navigates to a search page.
+  final bool readOnly;
+
   /// Whether to show the clear button when text is present.
   final bool showClearButton;
 
@@ -82,6 +135,17 @@ class SearchPlusBar extends StatefulWidget {
 
   /// Text capitalization.
   final TextCapitalization textCapitalization;
+
+  /// Keyboard type for the text field.
+  ///
+  /// Defaults to the platform default. Set to [TextInputType.url] or
+  /// [TextInputType.emailAddress] for specialized search contexts.
+  final TextInputType? keyboardType;
+
+  /// Optional input formatters applied to the text field.
+  ///
+  /// Useful for restricting characters (e.g. digits only) or limiting length.
+  final List<TextInputFormatter>? inputFormatters;
 
   /// Callback for the filter button. If null, filter button is hidden.
   final VoidCallback? onFilterPressed;
@@ -97,6 +161,18 @@ class SearchPlusBar extends StatefulWidget {
 
   /// Custom background color. If null, uses the theme's default.
   final Color? backgroundColor;
+
+  /// Direct text style override. If null, uses the theme's default.
+  final TextStyle? textStyle;
+
+  /// Direct hint text style override. If null, uses the theme's default.
+  final TextStyle? hintStyle;
+
+  /// Direct height override. If null, uses the theme's default (56).
+  final double? height;
+
+  /// Padding inside the text field. If null, uses [EdgeInsets.zero].
+  final EdgeInsets? contentPadding;
 
   @override
   State<SearchPlusBar> createState() => _SearchPlusBarState();
@@ -221,7 +297,7 @@ class _SearchPlusBarState extends State<SearchPlusBar>
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeOutCubic,
-                height: barTheme.height,
+                height: widget.height ?? barTheme.height,
                 decoration: BoxDecoration(
                   borderRadius: effectiveBorderRadius,
                   border: Border.all(
@@ -254,22 +330,27 @@ class _SearchPlusBarState extends State<SearchPlusBar>
                         focusNode: _focusNode,
                         autofocus: widget.autofocus,
                         enabled: widget.enabled,
+                        readOnly: widget.readOnly,
+                        onTap: widget.onTap,
                         textInputAction: widget.textInputAction,
                         textCapitalization: widget.textCapitalization,
-                        style: barTheme.textStyle,
+                        keyboardType: widget.keyboardType,
+                        inputFormatters: widget.inputFormatters,
+                        style: widget.textStyle ?? barTheme.textStyle,
                         cursorColor: barTheme.cursorColor,
                         decoration: InputDecoration(
                           hintText: widget.hintText ?? l10n.hintText,
-                          hintStyle: barTheme.hintStyle,
+                          hintStyle: widget.hintStyle ?? barTheme.hintStyle,
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.zero,
+                          contentPadding:
+                              widget.contentPadding ?? EdgeInsets.zero,
                           isDense: true,
                         ),
                         onChanged: widget.onChanged,
                         onSubmitted: widget.onSubmitted,
                       ),
                     ),
-                    if (_hasText && widget.showClearButton)
+                    if (_hasText && widget.showClearButton && !widget.readOnly)
                       _buildIconButton(
                         icon: Icons.close_rounded,
                         tooltip: l10n.clearSearchTooltip,
