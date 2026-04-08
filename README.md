@@ -253,6 +253,295 @@ AppBar(
 
 ---
 
+## 📋 SearchableListView — Ready-to-Use Searchable List
+
+`SearchableListView<T>` is a **convenience widget** that combines `SearchPlusBar`,
+`SearchPlusResults`, and an internal `SearchPlusController` into a single,
+drop-in widget. Just provide your items, tell it how to extract searchable
+text, and how to convert each item to a `SearchResult` — everything else
+(debouncing, state management, empty/loading/error states, animations) is
+handled for you.
+
+> **When to use `SearchableListView` vs. building manually:**
+>
+> | Scenario | Recommendation |
+> |----------|----------------|
+> | Simple searchable list with default layout | ✅ `SearchableListView` |
+> | Custom bar + results placement / overlay mode | Use `SearchPlusBar` + `SearchPlusResults` directly |
+> | Need an external controller shared across widgets | Use `SearchPlusController` + individual widgets |
+
+### Minimal example
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:search_plus/search_plus.dart';
+
+class FruitSearchPage extends StatelessWidget {
+  const FruitSearchPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Fruit Search')),
+      body: SearchableListView<String>(
+        items: const ['Apple', 'Banana', 'Cherry', 'Date', 'Elderberry'],
+        searchableFields: (item) => [item],
+        toResult: (item) => SearchResult(id: item, title: item, data: item),
+      ),
+    );
+  }
+}
+```
+
+### Custom model with item builder
+
+```dart
+class Product {
+  final String id;
+  final String name;
+  final String category;
+  final String imageUrl;
+
+  const Product({
+    required this.id,
+    required this.name,
+    required this.category,
+    required this.imageUrl,
+  });
+}
+
+class ProductSearchPage extends StatelessWidget {
+  const ProductSearchPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final products = [
+      const Product(id: '1', name: 'Laptop', category: 'Electronics', imageUrl: 'https://example.com/laptop.png'),
+      const Product(id: '2', name: 'Sneakers', category: 'Footwear', imageUrl: 'https://example.com/sneakers.png'),
+      const Product(id: '3', name: 'Backpack', category: 'Accessories', imageUrl: 'https://example.com/backpack.png'),
+    ];
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Products')),
+      body: SearchableListView<Product>(
+        items: products,
+        searchableFields: (p) => [p.name, p.category],
+        toResult: (p) => SearchResult(
+          id: p.id,
+          title: p.name,
+          subtitle: p.category,
+          data: p,
+        ),
+        hintText: 'Search products…',
+        enableFuzzySearch: true,
+        itemBuilder: (context, result, index) => ListTile(
+          leading: Image.network(result.data!.imageUrl, width: 48, height: 48),
+          title: Text(result.title),
+          subtitle: Text(result.subtitle ?? ''),
+        ),
+        onItemTap: (result) {
+          // Navigate to product detail
+          debugPrint('Selected: ${result.title}');
+        },
+      ),
+    );
+  }
+}
+```
+
+### Grid layout with theming
+
+```dart
+SearchableListView<Product>(
+  items: products,
+  searchableFields: (p) => [p.name, p.category],
+  toResult: (p) => SearchResult(id: p.id, title: p.name, data: p),
+  layout: SearchResultsLayout.grid,
+  gridCrossAxisCount: 3,
+  gridChildAspectRatio: 0.75,
+  animationConfig: const SearchAnimationConfig(
+    type: SearchAnimationType.staggeredSlide,
+  ),
+  theme: SearchPlusThemeData(
+    barTheme: SearchBarThemeData(
+      fillColor: Colors.grey.shade100,
+      borderRadius: BorderRadius.circular(16),
+    ),
+  ),
+)
+```
+
+### SearchableListView parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `items` | `List<T>` | **required** | Items to search through |
+| `searchableFields` | `List<String> Function(T)` | **required** | Extracts searchable text from each item |
+| `toResult` | `SearchResult<T> Function(T)` | **required** | Converts an item into a `SearchResult` |
+| `itemBuilder` | `Widget Function(…)?` | null | Custom builder for each result row |
+| `onItemTap` | `void Function(SearchResult<T>)?` | null | Called when a result is tapped |
+| `onQueryChanged` | `ValueChanged<String>?` | null | Called each time the query text changes |
+| `hintText` | `String?` | null | Search bar placeholder |
+| `autofocus` | `bool` | `false` | Auto-focus the search bar on mount |
+| `showClearButton` | `bool` | `true` | Show clear (×) button when text is present |
+| `debounceDuration` | `Duration` | 300 ms | Debounce before executing search |
+| `minQueryLength` | `int` | 1 | Minimum characters to trigger search |
+| `maxResults` | `int` | 50 | Maximum number of results |
+| `enableFuzzySearch` | `bool` | `false` | Enable Levenshtein-distance matching |
+| `layout` | `SearchResultsLayout` | `.list` | `.list` or `.grid` |
+| `density` | `SearchResultDensity` | `.comfortable` | Compact / comfortable / expanded |
+| `animationConfig` | `SearchAnimationConfig` | default | Animation preset and timing |
+| `leading` | `Widget?` | null | Leading widget in the search bar |
+| `trailing` | `Widget?` | null | Trailing widget in the search bar |
+| `onVoiceSearch` | `VoidCallback?` | null | Voice-search callback (shows mic icon) |
+| `onFilterPressed` | `VoidCallback?` | null | Filter callback (shows filter icon) |
+| `idleBuilder` | `Widget Function(BuildContext)?` | null | Widget to show when no query is entered |
+| `headerBuilder` | `Widget Function(…)?` | null | Header above results |
+| `footerBuilder` | `Widget Function(…)?` | null | Footer below results |
+| `separatorBuilder` | `Widget Function(…)?` | null | Custom separator between list items |
+| `theme` | `SearchPlusThemeData?` | null | Theme override |
+| `localizations` | `SearchLocalizations?` | null | Localization override |
+| `physics` | `ScrollPhysics?` | null | Scroll physics for the list |
+| `shrinkWrap` | `bool` | `false` | Shrink-wrap the results list |
+
+---
+
+## 🔌 Using SearchableListView with Custom Widgets
+
+`SearchableListView` is a self-contained widget — it creates and manages its
+own `SearchPlusController` and `LocalSearchAdapter` internally. This means
+**third-party or custom widgets** (like the `NovaDrawerSearchBar` example below)
+can sit alongside or wrap `SearchableListView` without conflicts.
+
+### How NovaDrawerSearchBar works with search_plus
+
+The `NovaDrawerSearchBar` from the **NovaDrawer** package is a great example of
+how external libraries build on `search_plus`. Here's how it works:
+
+1. **Controller-based constructor** — accepts an external `SearchPlusController`
+   that the caller creates and owns. The drawer bar delegates all search logic
+   to the controller.
+2. **Simple constructor** — accepts raw `items`, `searchableFields`, and
+   `toResult`, then builds a `LocalSearchAdapter` and `SearchPlusController`
+   internally (the same pattern `SearchableListView` uses).
+3. **Wraps `SearchPlusBar`** — under the hood it renders a `SearchPlusBar`
+   with drawer-friendly defaults (padding, overlay toggle, animation config).
+
+#### Example: SearchableListView inside a drawer alongside NovaDrawerSearchBar
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:search_plus/search_plus.dart';
+
+class AppDrawer extends StatelessWidget {
+  const AppDrawer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final menuItems = ['Home', 'Settings', 'Profile', 'Help', 'About'];
+
+    return Drawer(
+      child: SafeArea(
+        child: SearchableListView<String>(
+          items: menuItems,
+          searchableFields: (item) => [item],
+          toResult: (item) => SearchResult(
+            id: item,
+            title: item,
+            data: item,
+          ),
+          hintText: 'Search menu…',
+          shrinkWrap: false,
+          onItemTap: (result) {
+            Navigator.of(context).pop(); // close drawer
+            // navigate to selected menu item
+          },
+          idleBuilder: (context) => ListView(
+            children: menuItems
+                .map((item) => ListTile(
+                      title: Text(item),
+                      onTap: () => Navigator.of(context).pop(),
+                    ))
+                .toList(),
+          ),
+        ),
+      ),
+    );
+  }
+}
+```
+
+#### Example: Sharing a controller between NovaDrawerSearchBar and SearchableListView
+
+If your custom search bar (like `NovaDrawerSearchBar`) exposes a
+`SearchPlusController`, you can share that controller with other widgets.
+However, `SearchableListView` manages its own controller, so use
+`SearchPlusBar` + `SearchPlusResults` directly when you need a shared
+controller:
+
+```dart
+class SharedControllerExample extends StatefulWidget {
+  const SharedControllerExample({super.key});
+
+  @override
+  State<SharedControllerExample> createState() =>
+      _SharedControllerExampleState();
+}
+
+class _SharedControllerExampleState extends State<SharedControllerExample> {
+  late final SearchPlusController<String> controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = SearchPlusController<String>(
+      adapter: LocalSearchAdapter<String>(
+        items: ['Home', 'Settings', 'Profile', 'Help'],
+        searchableFields: (item) => [item],
+        toResult: (item) => SearchResult(id: item, title: item, data: item),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Your custom search bar (or NovaDrawerSearchBar)
+        // drives the shared controller
+        SearchPlusBar(
+          onChanged: (query) => controller.search(query),
+          hintText: 'Search menu…',
+        ),
+        // Results react to the same controller
+        Expanded(
+          child: ListenableBuilder(
+            listenable: controller,
+            builder: (context, _) => SearchPlusResults<String>(
+              state: controller.state,
+              onItemTap: (result) => debugPrint('Tapped: ${result.title}'),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+```
+
+> **Key takeaway:** Use `SearchableListView` when you want an all-in-one
+> solution. Use `SearchPlusBar` + `SearchPlusResults` + your own
+> `SearchPlusController` when you need to share state between multiple widgets
+> (e.g. a custom drawer search bar that drives a results panel elsewhere).
+
+---
+
 ## 🆚 Why Search Plus vs. Alternatives
 
 | Feature | **search_plus** | DIY `TextField` + `FutureBuilder` | Flutter `SearchBar` + `SearchAnchor` | Other pub packages |
@@ -889,6 +1178,7 @@ Works with: **REST**, **GraphQL**, **gRPC**, **Hive**, **Isar**, **SQLite**, **E
 | `SearchPlusOverlay<T>` | Floating dropdown result panel |
 | `SuggestionChips` | Trending / auto-complete suggestion chips |
 | `SearchHistoryList` | Recent search history with remove actions |
+| `SearchableListView<T>` | All-in-one searchable list (bar + results + controller) |
 | `ScrollToTopButton` | FAB that appears on scroll |
 | `SearchEmptyState` | No-results UI |
 | `SearchErrorState` | Error UI with retry |
