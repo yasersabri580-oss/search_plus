@@ -47,6 +47,7 @@ export 'src/ui/states/search_states.dart';
 export 'src/ui/suggestion_chips.dart';
 export 'src/ui/search_history_list.dart';
 export 'src/ui/scroll_to_top_button.dart';
+export 'src/ui/searchable_listview.dart';
 
 // UI Pro
 export 'src/ui/pro/skeleton_loading.dart';

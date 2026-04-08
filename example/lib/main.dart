@@ -8,6 +8,7 @@ import 'examples/full_showcase_example.dart';
 import 'examples/modern_features_example.dart';
 import 'examples/original_example.dart';
 import 'examples/overlay_example.dart';
+import 'examples/searchable_listview_example.dart';
 import 'searchplus_demo.dart';
 
 void main() {
@@ -180,6 +181,13 @@ class _ExampleHub extends StatelessWidget {
             subtitle: 'Floating dropdown results over content.',
             color: Colors.indigo,
             onTap: () => _push(context, const OverlayExample()),
+          ),
+          _ExampleCard(
+            icon: Icons.list_alt_rounded,
+            title: 'SearchableListView',
+            subtitle: 'Search bar + list with zero setup — just pass items.',
+            color: Colors.cyan,
+            onTap: () => _push(context, const SearchableListViewExample()),
           ),
           const Divider(height: 32),
           _ExampleCard(
