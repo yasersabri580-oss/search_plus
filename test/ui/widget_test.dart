@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide SearchBarThemeData;
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:search_plus/search_plus.dart';
 
@@ -99,6 +100,100 @@ void main() {
       ));
 
       expect(find.byIcon(Icons.search_rounded), findsOneWidget);
+    });
+
+    testWidgets('calls onTap when tapped', (tester) async {
+      bool tapped = false;
+      await tester.pumpWidget(_buildTestApp(
+        SearchPlusBar(
+          readOnly: true,
+          onTap: () => tapped = true,
+        ),
+      ));
+
+      await tester.tap(find.byType(TextField));
+      expect(tapped, isTrue);
+    });
+
+    testWidgets('readOnly prevents text input', (tester) async {
+      String? changedValue;
+      await tester.pumpWidget(_buildTestApp(
+        SearchPlusBar(
+          readOnly: true,
+          onChanged: (value) => changedValue = value,
+        ),
+      ));
+
+      await tester.enterText(find.byType(TextField), 'test text');
+      await tester.pump();
+      // readOnly field should not trigger onChanged
+      expect(changedValue, isNull);
+    });
+
+    testWidgets('hides clear button when readOnly is true', (tester) async {
+      final controller = TextEditingController(text: 'hello');
+      await tester.pumpWidget(_buildTestApp(
+        SearchPlusBar(
+          readOnly: true,
+          controller: controller,
+        ),
+      ));
+      await tester.pump();
+
+      expect(find.byIcon(Icons.close_rounded), findsNothing);
+      controller.dispose();
+    });
+
+    testWidgets('applies custom textStyle', (tester) async {
+      const customStyle = TextStyle(fontSize: 24, color: Colors.red);
+      await tester.pumpWidget(_buildTestApp(
+        const SearchPlusBar(textStyle: customStyle),
+      ));
+
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.style?.fontSize, 24);
+    });
+
+    testWidgets('applies custom hintStyle', (tester) async {
+      const customHintStyle = TextStyle(fontSize: 18, color: Colors.grey);
+      await tester.pumpWidget(_buildTestApp(
+        const SearchPlusBar(hintStyle: customHintStyle),
+      ));
+
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.decoration?.hintStyle?.fontSize, 18);
+    });
+
+    testWidgets('applies custom height', (tester) async {
+      await tester.pumpWidget(_buildTestApp(
+        const SearchPlusBar(height: 72),
+      ));
+
+      // SearchPlusBar passes height to the AnimatedContainer
+      // Verify the TextField is rendered (widget tree is valid with custom height)
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.byType(AnimatedContainer), findsOneWidget);
+    });
+
+    testWidgets('applies inputFormatters to text field', (tester) async {
+      await tester.pumpWidget(_buildTestApp(
+        SearchPlusBar(
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        ),
+      ));
+
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.inputFormatters, isNotNull);
+      expect(textField.inputFormatters, hasLength(1));
+    });
+
+    testWidgets('applies keyboardType to text field', (tester) async {
+      await tester.pumpWidget(_buildTestApp(
+        const SearchPlusBar(keyboardType: TextInputType.number),
+      ));
+
+      final textField = tester.widget<TextField>(find.byType(TextField));
+      expect(textField.keyboardType, TextInputType.number);
     });
   });
 
