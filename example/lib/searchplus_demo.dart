@@ -68,7 +68,8 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
       case _Dataset.products:
         _controller = SearchPlusController<Product>(
           adapter: RemoteSearchAdapter<Product>(
-            searchFunction: (q, limit, offset) => _api.searchProducts(q, limit: limit, offset: offset),
+            searchFunction: (q, limit, offset) =>
+                _api.searchProducts(q, limit: limit, offset: offset),
             suggestFunction: _api.suggestProducts,
           ),
           debounceDuration: const Duration(milliseconds: 300),
@@ -77,7 +78,8 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
       case _Dataset.users:
         _controller = SearchPlusController<AppUser>(
           adapter: RemoteSearchAdapter<AppUser>(
-            searchFunction: (q, limit, offset) => _api.searchUsers(q, limit: limit, offset: offset),
+            searchFunction: (q, limit, offset) =>
+                _api.searchUsers(q, limit: limit, offset: offset),
             suggestFunction: _api.suggestUsers,
           ),
           debounceDuration: const Duration(milliseconds: 300),
@@ -86,7 +88,8 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
       case _Dataset.articles:
         _controller = SearchPlusController<Article>(
           adapter: RemoteSearchAdapter<Article>(
-            searchFunction: (q, limit, offset) => _api.searchArticles(q, limit: limit, offset: offset),
+            searchFunction: (q, limit, offset) =>
+                _api.searchArticles(q, limit: limit, offset: offset),
             suggestFunction: _api.suggestArticles,
           ),
           debounceDuration: const Duration(milliseconds: 300),
@@ -99,11 +102,11 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
 
   // -- Theme data per style preset ------------------------------------------
 
-  SearchThemeData _themeForPreset(BuildContext context) {
+  SearchPlusThemeData _themeForPreset(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     switch (_style) {
       case _StylePreset.minimal:
-        return SearchThemeData(
+        return SearchPlusThemeData(
           searchBarTheme: SearchBarThemeData(
             borderRadius: BorderRadius.circular(8),
             elevation: 0,
@@ -117,7 +120,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
           ),
         );
       case _StylePreset.modernSaas:
-        return SearchThemeData(
+        return SearchPlusThemeData(
           searchBarTheme: SearchBarThemeData(
             borderRadius: BorderRadius.circular(16),
             elevation: 0,
@@ -127,12 +130,14 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
           ),
           resultTheme: SearchResultThemeData(
             highlightColor: cs.primaryContainer,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
           ),
         );
       case _StylePreset.dark:
-        return SearchThemeData(
+        return SearchPlusThemeData(
           searchBarTheme: SearchBarThemeData(
             borderRadius: BorderRadius.circular(12),
             backgroundColor: const Color(0xFF1E1E1E),
@@ -149,7 +154,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
           ),
         );
       case _StylePreset.social:
-        return SearchThemeData(
+        return SearchPlusThemeData(
           searchBarTheme: SearchBarThemeData(
             borderRadius: BorderRadius.circular(28),
             backgroundColor: cs.surfaceContainerHighest.withAlpha(80),
@@ -161,7 +166,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
           ),
         );
       case _StylePreset.glass:
-        return SearchThemeData(
+        return SearchPlusThemeData(
           searchBarTheme: SearchBarThemeData(
             borderRadius: BorderRadius.circular(20),
             backgroundColor: Colors.white.withAlpha(25),
@@ -178,7 +183,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
           ),
         );
       case _StylePreset.darkPremium:
-        return SearchThemeData(
+        return SearchPlusThemeData(
           searchBarTheme: SearchBarThemeData(
             borderRadius: BorderRadius.circular(14),
             backgroundColor: const Color(0xFF1A1A2E),
@@ -216,10 +221,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF6A11CB),
-              Color(0xFF2575FC),
-            ],
+            colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
           ),
         ),
         child: body,
@@ -243,8 +245,8 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
                 seedColor: isGlass
                     ? Colors.deepPurple
                     : _style == _StylePreset.darkPremium
-                        ? const Color(0xFFE94560)
-                        : Colors.teal,
+                    ? const Color(0xFFE94560)
+                    : Colors.teal,
                 brightness: Brightness.dark,
               ),
             )
@@ -253,9 +255,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
         backgroundColor: Colors.transparent,
         appBar: AppBar(
           title: const Text('SearchPlus Demo'),
-          backgroundColor: isGlass || isDarkStyle
-              ? Colors.transparent
-              : null,
+          backgroundColor: isGlass || isDarkStyle ? Colors.transparent : null,
           elevation: 0,
           foregroundColor: isGlass || isDarkStyle ? Colors.white : null,
         ),
@@ -311,7 +311,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SearchOverlay<dynamic>(
+          SearchPlusOverlay<dynamic>(
             controller: _controller!,
             hintText: 'Search ${_dataset.name}…',
             maxOverlayHeight: 350,
@@ -333,11 +333,10 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
               child: Text(
                 'Overlay mode — results appear above this content',
                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant
-                          .withValues(alpha: 0.6),
-                    ),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -348,7 +347,9 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
   }
 
   Widget _buildInlineBody(
-      BuildContext context, SearchState<dynamic>? overrideState) {
+    BuildContext context,
+    SearchState<dynamic>? overrideState,
+  ) {
     return Column(
       children: [
         Padding(
@@ -368,7 +369,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
             listenable: _controller!,
             builder: (context, _) {
               final state = overrideState ?? _controller!.state;
-              return SearchResultsWidget<dynamic>(
+              return SearchPlusResults<dynamic>(
                 state: state,
                 layout: _layout,
                 density: _density,
@@ -403,10 +404,7 @@ class _SearchPlusDemoState extends State<SearchPlusDemo> {
       case _ForcedState.none:
         return null;
       case _ForcedState.loading:
-        return const SearchState(
-          query: 'demo',
-          status: SearchStatus.loading,
-        );
+        return const SearchState(query: 'demo', status: SearchStatus.loading);
       case _ForcedState.empty:
         return const SearchState(
           query: 'xyznodata',
@@ -596,22 +594,10 @@ class _ControlDrawer extends StatelessWidget {
             _SectionTitle('Force State'),
             SegmentedButton<_ForcedState>(
               segments: const [
-                ButtonSegment(
-                  value: _ForcedState.none,
-                  label: Text('Auto'),
-                ),
-                ButtonSegment(
-                  value: _ForcedState.loading,
-                  label: Text('Load'),
-                ),
-                ButtonSegment(
-                  value: _ForcedState.empty,
-                  label: Text('Empty'),
-                ),
-                ButtonSegment(
-                  value: _ForcedState.error,
-                  label: Text('Error'),
-                ),
+                ButtonSegment(value: _ForcedState.none, label: Text('Auto')),
+                ButtonSegment(value: _ForcedState.loading, label: Text('Load')),
+                ButtonSegment(value: _ForcedState.empty, label: Text('Empty')),
+                ButtonSegment(value: _ForcedState.error, label: Text('Error')),
               ],
               selected: {forcedState},
               onSelectionChanged: (v) => onForcedStateChanged(v.first),
@@ -656,9 +642,9 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              fontWeight: FontWeight.w600,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
       ),
     );
   }

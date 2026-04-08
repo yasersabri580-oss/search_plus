@@ -238,7 +238,7 @@ class _ResultsTab extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return SearchTheme(
-      data: SearchThemeData(
+      data: SearchPlusThemeData(
         resultTheme: SearchResultThemeData(
           highlightColor: colorScheme.primary.withAlpha(40),
           contentPadding: const EdgeInsets.symmetric(
@@ -247,7 +247,7 @@ class _ResultsTab extends StatelessWidget {
           ),
         ),
       ),
-      child: SearchResultsWidget<Product>(
+      child: SearchPlusResults<Product>(
         state: controller.state,
         animationConfig: const SearchAnimationConfig(
           preset: SearchAnimationPreset.staggered,

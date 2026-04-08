@@ -1,8 +1,5 @@
 # Changelog
 
-## 3.1.0
+## 3.1.1
 
-- Increase performance
-- added more features to local and remote search
-- added not found widget for overlay search
-- enhance UI/Ux
+- unused importes fixed

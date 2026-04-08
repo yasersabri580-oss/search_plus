@@ -199,7 +199,7 @@ class _SearchPlusScreenState<T> extends State<SearchPlusScreen<T>>
     return Column(
       key: ValueKey(state.status),
       children: [
-        if (header != null) header,
+        ?header,
         Expanded(
           child: switch (state.status) {
             SearchStatus.idle => _buildIdleState(state),

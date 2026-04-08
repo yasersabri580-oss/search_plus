@@ -67,7 +67,7 @@ class _AdvancedExampleState extends State<AdvancedExample> {
         ],
       ),
       body: SearchTheme(
-        data: SearchThemeData(
+        data: SearchPlusThemeData(
           searchBarTheme: SearchBarThemeData(
             borderRadius: BorderRadius.circular(28),
             backgroundColor: colorScheme.surfaceContainerHighest.withAlpha(80),

@@ -50,7 +50,7 @@ class _IntermediateExampleState extends State<IntermediateExample> {
     return Scaffold(
       appBar: AppBar(title: const Text('Intermediate Example')),
       body: SearchTheme(
-        data: SearchThemeData(
+        data: SearchPlusThemeData(
           searchBarTheme: SearchBarThemeData(
             borderRadius: BorderRadius.circular(16),
             focusedBorderColor: colorScheme.primary,

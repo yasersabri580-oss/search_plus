@@ -105,7 +105,7 @@ void main() {
   group('SearchResultsWidget', () {
     testWidgets('shows empty state when status is empty', (tester) async {
       await tester.pumpWidget(_buildTestApp(
-        const SearchResultsWidget(
+        const SearchPlusResults(
           state: SearchState(
             query: 'test',
             status: SearchStatus.empty,
@@ -118,7 +118,7 @@ void main() {
 
     testWidgets('shows error state when status is error', (tester) async {
       await tester.pumpWidget(_buildTestApp(
-        const SearchResultsWidget(
+        const SearchPlusResults(
           state: SearchState(
             query: 'test',
             status: SearchStatus.error,
@@ -132,7 +132,7 @@ void main() {
 
     testWidgets('shows results when status is success', (tester) async {
       await tester.pumpWidget(_buildTestApp(
-        SearchResultsWidget<String>(
+        SearchPlusResults<String>(
           state: SearchState<String>(
             query: 'test',
             status: SearchStatus.success,
@@ -152,7 +152,7 @@ void main() {
     testWidgets('calls onItemTap when result is tapped', (tester) async {
       SearchResult<String>? tappedResult;
       await tester.pumpWidget(_buildTestApp(
-        SearchResultsWidget<String>(
+        SearchPlusResults<String>(
           state: SearchState<String>(
             query: 'test',
             status: SearchStatus.success,
@@ -172,7 +172,7 @@ void main() {
     testWidgets('shows retry button on error', (tester) async {
       bool retried = false;
       await tester.pumpWidget(_buildTestApp(
-        SearchResultsWidget<String>(
+        SearchPlusResults<String>(
           state: const SearchState(
             query: 'test',
             status: SearchStatus.error,
@@ -236,7 +236,7 @@ void main() {
 
   group('SearchTheme', () {
     testWidgets('provides default theme', (tester) async {
-      late SearchThemeData capturedTheme;
+      late SearchPlusThemeData capturedTheme;
 
       await tester.pumpWidget(MaterialApp(
         home: Builder(
@@ -252,11 +252,11 @@ void main() {
     });
 
     testWidgets('overrides with custom theme', (tester) async {
-      late SearchThemeData capturedTheme;
+      late SearchPlusThemeData capturedTheme;
 
       await tester.pumpWidget(MaterialApp(
         home: SearchTheme(
-          data: SearchThemeData(
+          data: SearchPlusThemeData(
             searchBarTheme: SearchBarThemeData(
               borderRadius: BorderRadius.circular(0),
             ),

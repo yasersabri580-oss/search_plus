@@ -2,11 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:search_plus/search_plus.dart';
 
-import '../animations/animation_presets.dart';
-import '../core/search_result.dart';
-import '../core/search_state.dart';
-import '../theme/search_theme.dart';
-import 'states/search_states.dart';
 
 // Debug helper
 void _debug(String message, [Object? value]) {

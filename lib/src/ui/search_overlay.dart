@@ -1,12 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:search_plus/search_plus.dart';
 
-import '../animations/animation_presets.dart';
-import '../core/search_controller.dart';
-import '../core/search_result.dart';
-import '../core/search_state.dart';
-import 'search_bar_widget.dart';
-import 'states/search_states.dart';
 
 /// A search widget that displays results in a floating overlay dropdown
 /// beneath the search bar.

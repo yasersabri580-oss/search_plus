@@ -69,7 +69,7 @@ class _OverlayExampleState extends State<OverlayExample> {
 
             // The overlay search widget
             SearchTheme(
-              data: SearchThemeData(
+              data: SearchPlusThemeData(
                 searchBarTheme: SearchBarThemeData(
                   borderRadius: BorderRadius.circular(16),
                   focusedBorderColor: colorScheme.primary,
@@ -77,7 +77,7 @@ class _OverlayExampleState extends State<OverlayExample> {
                   focusedElevation: 2,
                 ),
               ),
-              child: SearchOverlay<Product>(
+              child: SearchPlusOverlay<Product>(
                 controller: _controller,
                 hintText: 'Search products…',
                 maxOverlayHeight: 350,

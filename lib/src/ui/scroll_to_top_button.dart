@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
 
 /// A floating button that appears when the user scrolls down,
 /// allowing them to quickly scroll back to the top.

@@ -590,7 +590,7 @@ class _SearchDemoPageState extends State<SearchDemoPage> {
                         ),
                       );
                     },
-                    theme: SearchThemeData(
+                    theme: SearchPlusThemeData(
                       searchBarTheme: SearchBarThemeData(
                         borderRadius: BorderRadius.circular(18),
                         focusedBorderColor: accent,
