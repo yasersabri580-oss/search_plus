@@ -49,6 +49,48 @@ flutter pub get
 
 ---
 
+## 🎬 Demo
+
+Visual examples of SearchPlus in action:
+
+### Search Input
+
+<p align="center">
+  <img src="assets/gifs/basic_example.gif" alt="Search Input Demo" width="320"/>
+</p>
+
+### Live Suggestions
+
+<p align="center">
+  <img src="assets/gifs/intermediate_example.gif" alt="Live Suggestions Demo" width="320"/>
+</p>
+
+### Results UI
+
+<p align="center">
+  <img src="assets/gifs/advance_example.gif" alt="Results UI Demo" width="320"/>
+</p>
+
+### Empty State / No Results
+
+<p align="center">
+  <img src="assets/gifs/show_case.gif" alt="Empty State / No Results Demo" width="320"/>
+</p>
+
+### Optional Feedback / Toast System
+
+<p align="center">
+  <img src="assets/gifs/show_case_2.gif" alt="Optional Feedback / Toast System Demo" width="320"/>
+</p>
+
+> **Overlay Mode** — floating dropdown results panel:
+>
+> <p align="center">
+>   <img src="assets/gifs/overlay.gif" alt="Overlay Mode Demo" width="320"/>
+> </p>
+
+---
+
 ## ⚡ Quick Start
 
 Get a working search in under 30 seconds:
