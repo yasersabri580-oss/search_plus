@@ -1,5 +1,5 @@
 # Changelog
 
-## 3.2.2
+## 3.2.3
 
-- Added searchable Listview
+- Readme.md file updated
