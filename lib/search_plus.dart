@@ -39,6 +39,7 @@ export 'src/remote/query_deduplicator.dart';
 export 'src/remote/enhanced_remote_adapter.dart';
 
 // UI
+export 'src/ui/app_bar_search_button.dart';
 export 'src/ui/search_bar_widget.dart';
 export 'src/ui/search_results_widget.dart';
 export 'src/ui/search_scaffold.dart';

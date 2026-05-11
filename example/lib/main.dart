@@ -4,6 +4,7 @@ import 'package:search_plus/search_plus.dart';
 import 'examples/basic_example.dart';
 import 'examples/intermediate_example.dart';
 import 'examples/advanced_example.dart';
+import 'examples/app_bar_search_example.dart';
 import 'examples/full_showcase_example.dart';
 import 'examples/modern_features_example.dart';
 import 'examples/original_example.dart';
@@ -133,6 +134,14 @@ class _ExampleHub extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Example cards
+          _ExampleCard(
+            icon: Icons.search_rounded,
+            title: 'AppBar Search',
+            subtitle:
+                'Expandable search icon in the AppBar — hover or tap to reveal.',
+            color: Colors.deepOrange,
+            onTap: () => _push(context, const AppBarSearchExample()),
+          ),
           _ExampleCard(
             icon: Icons.play_arrow_rounded,
             title: 'Basic Example',
