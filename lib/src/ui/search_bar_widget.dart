@@ -341,7 +341,12 @@ class _SearchPlusBarState extends State<SearchPlusBar>
                         decoration: InputDecoration(
                           hintText: widget.hintText ?? l10n.hintText,
                           hintStyle: widget.hintStyle ?? barTheme.hintStyle,
-                          border: InputBorder.none,
+                          border:
+                              barTheme.textFieldBorder ?? InputBorder.none,
+                          enabledBorder:
+                              barTheme.textFieldBorder ?? InputBorder.none,
+                          focusedBorder: barTheme.textFieldFocusedBorder ??
+                              InputBorder.none,
                           contentPadding:
                               widget.contentPadding ?? EdgeInsets.zero,
                           isDense: true,

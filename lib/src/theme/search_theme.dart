@@ -81,6 +81,8 @@ class SearchBarThemeData {
     this.focusedBorderColor,
     this.borderWidth,
     this.shadowColor,
+    this.textFieldBorder,
+    this.textFieldFocusedBorder,
   });
 
   final Color? backgroundColor;
@@ -98,6 +100,63 @@ class SearchBarThemeData {
   final Color? focusedBorderColor;
   final double? borderWidth;
   final Color? shadowColor;
+
+  /// Border for the inner [TextField] in its normal (enabled) state.
+  ///
+  /// Defaults to [InputBorder.none] so the outer container's border is the
+  /// only visible border. Set to an [OutlineInputBorder] or
+  /// [UnderlineInputBorder] for full customisation.
+  final InputBorder? textFieldBorder;
+
+  /// Border for the inner [TextField] when it has focus.
+  ///
+  /// Defaults to [InputBorder.none]. Override this to control the blue (or
+  /// theme-default) highlight that Flutter normally draws around the text
+  /// field when it is focused.
+  final InputBorder? textFieldFocusedBorder;
+
+  /// Creates a copy with the given fields replaced.
+  SearchBarThemeData copyWith({
+    Color? backgroundColor,
+    Color? focusedBackgroundColor,
+    BorderRadius? borderRadius,
+    double? elevation,
+    double? focusedElevation,
+    EdgeInsets? padding,
+    double? height,
+    TextStyle? textStyle,
+    TextStyle? hintStyle,
+    Color? iconColor,
+    Color? cursorColor,
+    Color? borderColor,
+    Color? focusedBorderColor,
+    double? borderWidth,
+    Color? shadowColor,
+    InputBorder? textFieldBorder,
+    InputBorder? textFieldFocusedBorder,
+  }) {
+    return SearchBarThemeData(
+      backgroundColor: backgroundColor ?? this.backgroundColor,
+      focusedBackgroundColor:
+          focusedBackgroundColor ?? this.focusedBackgroundColor,
+      borderRadius: borderRadius ?? this.borderRadius,
+      elevation: elevation ?? this.elevation,
+      focusedElevation: focusedElevation ?? this.focusedElevation,
+      padding: padding ?? this.padding,
+      height: height ?? this.height,
+      textStyle: textStyle ?? this.textStyle,
+      hintStyle: hintStyle ?? this.hintStyle,
+      iconColor: iconColor ?? this.iconColor,
+      cursorColor: cursorColor ?? this.cursorColor,
+      borderColor: borderColor ?? this.borderColor,
+      focusedBorderColor: focusedBorderColor ?? this.focusedBorderColor,
+      borderWidth: borderWidth ?? this.borderWidth,
+      shadowColor: shadowColor ?? this.shadowColor,
+      textFieldBorder: textFieldBorder ?? this.textFieldBorder,
+      textFieldFocusedBorder:
+          textFieldFocusedBorder ?? this.textFieldFocusedBorder,
+    );
+  }
 
   /// Resolves defaults from the color scheme.
   SearchBarThemeData resolve(BuildContext context, ColorScheme colorScheme) {
@@ -126,6 +185,8 @@ class SearchBarThemeData {
       focusedBorderColor: focusedBorderColor ?? colorScheme.primary,
       borderWidth: borderWidth ?? 1.0,
       shadowColor: shadowColor ?? colorScheme.shadow.withValues(alpha: 0.1),
+      textFieldBorder: textFieldBorder ?? InputBorder.none,
+      textFieldFocusedBorder: textFieldFocusedBorder ?? InputBorder.none,
     );
   }
 }
