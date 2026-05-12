@@ -231,81 +231,88 @@ class _AppBarSearchButtonState extends State<AppBarSearchButton>
     final l10n = SearchLocalizationsProvider.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
-    return MouseRegion(
-      onEnter: (_) => _handleHoverEnter(),
-      onExit: (_) => _handleHoverExit(),
-      child: AnimatedBuilder(
-        animation: _expandAnimation,
-        builder: (context, _) {
-          final t = _expandAnimation.value;
+    return SizedBox(
+      // Fix: lock the widget to a constant height equal to the input height so
+      // the search icon stays perfectly aligned with the search field at all
+      // stages of the expand / collapse animation.
+      height: widget.inputHeight,
+      child: MouseRegion(
+        onEnter: (_) => _handleHoverEnter(),
+        onExit: (_) => _handleHoverExit(),
+        child: AnimatedBuilder(
+          animation: _expandAnimation,
+          builder: (context, _) {
+            final t = _expandAnimation.value;
 
-          final iconColor = Color.lerp(
-            barTheme.iconColor ?? colorScheme.onSurfaceVariant,
-            barTheme.focusedBorderColor ?? colorScheme.primary,
-            t,
-          );
+            final iconColor = Color.lerp(
+              barTheme.iconColor ?? colorScheme.onSurfaceVariant,
+              barTheme.activeIconColor ?? colorScheme.primary,
+              t,
+            );
 
-          return Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // ── Animated text field ──────────────────────────────────────
-              ClipRect(
-                child: SizeTransition(
-                  sizeFactor: _expandAnimation,
-                  axis: Axis.horizontal,
-                  // axisAlignment 1.0 anchors to the trailing edge so the
-                  // field appears to unfold from the direction of the icon.
-                  axisAlignment: 1.0,
-                  child: SizedBox(
-                    width: widget.expandedWidth,
-                    height: widget.inputHeight,
-                    child: FadeTransition(
-                      opacity: _expandAnimation,
-                      child: _InputContainer(
-                        barTheme: barTheme,
-                        colorScheme: colorScheme,
-                        l10n: l10n,
-                        t: t,
-                        isFocused: _isFocused,
-                        hasText: _hasText,
-                        showClearButton: widget.showClearButton,
-                        inputHeight: widget.inputHeight,
-                        hintText: widget.hintText,
-                        textController: _textController,
-                        focusNode: _focusNode,
-                        onChanged: widget.onChanged,
-                        onSubmitted: widget.onSubmitted,
-                        onClear: _clear,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-
-              // ── Search icon (always visible) ─────────────────────────────
-              Tooltip(
-                message: widget.searchTooltip ?? 'Search',
-                child: Material(
-                  color: Colors.transparent,
-                  shape: const CircleBorder(),
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: _handleIconPressed,
+            return Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                // ── Animated text field ──────────────────────────────────────
+                ClipRect(
+                  child: SizeTransition(
+                    sizeFactor: _expandAnimation,
+                    axis: Axis.horizontal,
+                    // axisAlignment 1.0 anchors to the trailing edge so the
+                    // field appears to unfold from the direction of the icon.
+                    axisAlignment: 1.0,
                     child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Icon(
-                        Icons.search_rounded,
-                        color: iconColor,
-                        size: 22,
+                      width: widget.expandedWidth,
+                      height: widget.inputHeight,
+                      child: FadeTransition(
+                        opacity: _expandAnimation,
+                        child: _InputContainer(
+                          barTheme: barTheme,
+                          colorScheme: colorScheme,
+                          l10n: l10n,
+                          t: t,
+                          isFocused: _isFocused,
+                          hasText: _hasText,
+                          showClearButton: widget.showClearButton,
+                          inputHeight: widget.inputHeight,
+                          hintText: widget.hintText,
+                          textController: _textController,
+                          focusNode: _focusNode,
+                          onChanged: widget.onChanged,
+                          onSubmitted: widget.onSubmitted,
+                          onClear: _clear,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+
+                // ── Search icon (always visible) ─────────────────────────────
+                Tooltip(
+                  message: widget.searchTooltip ?? 'Search',
+                  child: Material(
+                    color: Colors.transparent,
+                    shape: const CircleBorder(),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: _handleIconPressed,
+                      child: SizedBox(
+                        width: widget.inputHeight,
+                        height: widget.inputHeight,
+                        child: Icon(
+                          Icons.search_rounded,
+                          color: iconColor,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

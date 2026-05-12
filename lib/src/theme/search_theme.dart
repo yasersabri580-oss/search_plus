@@ -76,6 +76,7 @@ class SearchBarThemeData {
     this.textStyle,
     this.hintStyle,
     this.iconColor,
+    this.activeIconColor,
     this.cursorColor,
     this.borderColor,
     this.focusedBorderColor,
@@ -95,6 +96,13 @@ class SearchBarThemeData {
   final TextStyle? textStyle;
   final TextStyle? hintStyle;
   final Color? iconColor;
+
+  /// The color of the search icon when the field is expanded or focused.
+  ///
+  /// Defaults to [ColorScheme.primary]. Set this to control the icon's active
+  /// state color independently of [focusedBorderColor].
+  final Color? activeIconColor;
+
   final Color? cursorColor;
   final Color? borderColor;
   final Color? focusedBorderColor;
@@ -127,6 +135,7 @@ class SearchBarThemeData {
     TextStyle? textStyle,
     TextStyle? hintStyle,
     Color? iconColor,
+    Color? activeIconColor,
     Color? cursorColor,
     Color? borderColor,
     Color? focusedBorderColor,
@@ -147,6 +156,7 @@ class SearchBarThemeData {
       textStyle: textStyle ?? this.textStyle,
       hintStyle: hintStyle ?? this.hintStyle,
       iconColor: iconColor ?? this.iconColor,
+      activeIconColor: activeIconColor ?? this.activeIconColor,
       cursorColor: cursorColor ?? this.cursorColor,
       borderColor: borderColor ?? this.borderColor,
       focusedBorderColor: focusedBorderColor ?? this.focusedBorderColor,
@@ -180,6 +190,7 @@ class SearchBarThemeData {
           Theme.of(context).textTheme.bodyLarge?.copyWith(
               color: colorScheme.onSurfaceVariant),
       iconColor: iconColor ?? colorScheme.onSurfaceVariant,
+      activeIconColor: activeIconColor ?? colorScheme.primary,
       cursorColor: cursorColor ?? colorScheme.primary,
       borderColor: borderColor ?? colorScheme.outline.withValues(alpha: 0.2),
       focusedBorderColor: focusedBorderColor ?? colorScheme.primary,
