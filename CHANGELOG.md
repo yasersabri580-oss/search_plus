@@ -1,5 +1,16 @@
 # Changelog
 
+## 3.3.2
+
+- **Fix**: `AppBarSearchButton` icon no longer shifts vertically (~20 px) when the search field expands or collapses.
+  - The widget is now wrapped in a `SizedBox` whose height equals `inputHeight`, giving the AppBar a stable, constant-height anchor throughout the animation.
+  - The icon `SizedBox` now uses `inputHeight` for both width and height (instead of the hard-coded `40`) so that custom `inputHeight` values are respected correctly.
+  - `crossAxisAlignment: CrossAxisAlignment.center` is now set explicitly on the internal `Row` to guarantee vertical centering regardless of layout context.
+- **Theme**: Added `activeIconColor` to `SearchBarThemeData` — controls the search-icon color when the field is expanded or focused, independently of `focusedBorderColor`.
+  - Defaults to `ColorScheme.primary`.
+  - `copyWith` and `resolve` updated accordingly.
+  - `AppBarSearchButton` now interpolates the icon color between `iconColor` (collapsed) and `activeIconColor` (expanded) instead of using `focusedBorderColor` for the icon.
+
 ## 3.3.1
 
 - Added `textFieldBorder` and `textFieldFocusedBorder` (`InputBorder?`) to `SearchBarThemeData` for full control over the inner `TextField`'s border in all states.
