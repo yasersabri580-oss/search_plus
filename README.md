@@ -958,6 +958,7 @@ final suggestions = await api.suggestProducts('wire');
 │ In-memory    │  │ Future-based       │  │ Merges local +     │
 │ with ranking │  │ async delegation   │  │ remote with dedup  │
 └──────────────┘  └────────────────────┘  └────────────────────┘
+
 ```
 idle  ──search()──▸  loading  ──results──▸  success
                        │                       │
