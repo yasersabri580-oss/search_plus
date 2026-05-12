@@ -391,7 +391,10 @@ class _InputContainer extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: hintText ?? l10n.hintText,
                 hintStyle: barTheme.hintStyle,
-                border: InputBorder.none,
+                border: barTheme.textFieldBorder ?? InputBorder.none,
+                enabledBorder: barTheme.textFieldBorder ?? InputBorder.none,
+                focusedBorder:
+                    barTheme.textFieldFocusedBorder ?? InputBorder.none,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
               ),

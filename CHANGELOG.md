@@ -1,5 +1,13 @@
 # Changelog
 
+## 3.3.1
+
+- Added `textFieldBorder` and `textFieldFocusedBorder` (`InputBorder?`) to `SearchBarThemeData` for full control over the inner `TextField`'s border in all states.
+  - Both default to `InputBorder.none`, eliminating the unwanted blue focus ring that Flutter's ambient `InputDecorationTheme` would otherwise draw inside the search bar.
+  - Override either property to apply a custom `OutlineInputBorder`, `UnderlineInputBorder`, or any other `InputBorder` subclass.
+  - Applied in both `AppBarSearchButton` and `SearchPlusBar`.
+- Added `copyWith` method to `SearchBarThemeData` for convenient partial updates.
+
 ## 3.3.0
 
 - Added `AppBarSearchButton`: a compact animated search action for `AppBar.actions`.
